@@ -1,11 +1,12 @@
 const NAV_ITEMS = [
-  { id: "dashboard",     icon: "▣", label: "Dashboard" },
-  { id: "crimes",        icon: "🗂", label: "Crimes" },
-  { id: "factions",      icon: "⚡", label: "Factions" },
-  { id: "market",        icon: "◈", label: "Black Market" },
-  { id: "territory",     icon: "⬡", label: "Territory" },
-  { id: "prison",        icon: "⊞", label: "Prison" },
-  { id: "profile",       icon: "◉", label: "Profile" },
+  { id: "dashboard",  icon: "▣", label: "Dashboard" },
+  { id: "crimes",     icon: "🗂", label: "Crimes" },
+  { id: "factions",   icon: "⚡", label: "Factions" },
+  { id: "crew",       icon: "👥", label: "Crew" },
+  { id: "market",     icon: "◈", label: "Black Market" },
+  { id: "territory",  icon: "⬡", label: "Territory" },
+  { id: "prison",     icon: "⊞", label: "Prison" },
+  { id: "profile",    icon: "◉", label: "Profile" },
 ];
 
 export default function Sidebar({ activePage, onNavigate }) {
@@ -28,7 +29,7 @@ export default function Sidebar({ activePage, onNavigate }) {
       <div className="sidebar-footer">
         <div className="sidebar-section-label">System</div>
         <div className="sidebar-footer-stat mono">
-          <span className="muted">v0.1.0-alpha</span>
+          <span className="muted">v0.2.0-alpha</span>
         </div>
       </div>
 

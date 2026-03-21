@@ -245,3 +245,12 @@ hr.dark {
 
 .animate-in { animation: fadeIn 0.3s ease forwards; }
 .flicker    { animation: flicker 8s infinite; }
+
+/* ── Activity Log Panel ─────────────────────────────────────────────────── */
+.activity-log-panel {
+  grid-area: rightpanel;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border);
+  padding: 16px;
+  overflow-y: auto;
+}
