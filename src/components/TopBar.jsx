@@ -15,8 +15,8 @@ export default function TopBar({ player, serverOnline }) {
         {[
           { label: "Cash",   val: fmt(player?.cash ?? 500),        color: "var(--amber)" },
           { label: "Dirty",  val: fmt(player?.dirtyCash ?? 0),     color: "#8c7a3d" },
+          { label: "HP",     val: `${player?.health ?? 100}%`,     color: (player?.health ?? 100) > 60 ? "#3d8c5a" : (player?.health ?? 100) > 30 ? "#e67e22" : "#c0392b" },
           { label: "Energy", val: `${player?.energy ?? 100}/${player?.maxEnergy ?? 100}`, color: "#3d8c5a" },
-          { label: "Health", val: `${player?.health ?? 100}%`,     color: player?.health > 50 ? "#3d8c5a" : "#c0392b" },
         ].map(({ label, val, color }) => (
           <div key={label} className="topbar-stat">
             <span className="label">{label}</span>

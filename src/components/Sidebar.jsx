@@ -11,7 +11,9 @@ const NAV_ITEMS = [
   { id:"territory",   icon:"⬡", label:"Territory"   },
   { id:"prison",      icon:"⊞", label:"Prison"      },
   { id:"multiplayer", icon:"🌐", label:"Network"     },
+  { id:"news",        icon:"📰", label:"News"        },
   { id:"profile",     icon:"◉", label:"Profile"     },
+  { id:"settings",    icon:"⚙", label:"Settings"    },
 ];
 export default function Sidebar({ activePage, onNavigate }) {
   return (

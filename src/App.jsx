@@ -19,6 +19,8 @@ import FactionMissionsPage from "./pages/FactionMissionsPage";
 import CharacterCreation   from "./pages/CharacterCreation";
 import DailyChallengesPage from "./pages/DailyChallengesPage";
 import DarkWebPage         from "./pages/DarkWebPage";
+import SettingsPage        from "./pages/SettingsPage";
+import NewsFeedPage        from "./pages/NewsFeedPage";
 import Toasts              from "./components/Toasts";
 import { toast }           from "./components/Toasts";
 import EncounterModal      from "./components/EncounterModal";
@@ -334,6 +336,32 @@ export default function App() {
     });
   };
 
+  const handleReset = () => {
+    localStorage.removeItem(SAVE_KEY);
+    setPlayer(null);
+    setPage("dashboard");
+    setLog([]);
+    addLog("Character deleted. Starting over.");
+  };
+
+  const handleHeal = (cost) => {
+    setPlayer((prev) => {
+      if ((prev.cash || 0) < cost) return prev;
+      addLog(`Paid $${cost.toLocaleString()} for medical treatment.`);
+      toast.success("Health restored to 100%");
+      return { ...prev, cash: prev.cash - cost, health: 100 };
+    });
+  };
+
+  const handleRestoreEnergy = (cost) => {
+    setPlayer((prev) => {
+      if ((prev.cash || 0) < cost) return prev;
+      addLog(`Paid $${cost.toLocaleString()} to restore energy.`);
+      toast.success("Energy fully restored");
+      return { ...prev, cash: prev.cash - cost, energy: prev.maxEnergy || 100 };
+    });
+  };
+
   const handleEventChoice = (event, choice, outcome) => {
     setPlayer((prev) => {
       let next = {...prev};
@@ -355,6 +383,8 @@ export default function App() {
 
   const renderPage = () => {
     switch (page) {
+      case "settings":    return <SettingsPage      player={player} onReset={handleReset} onHeal={handleHeal} onRestoreEnergy={handleRestoreEnergy}/>;
+      case "news":        return <NewsFeedPage       player={player}/>;
       case "challenges":  return <DailyChallengesPage player={player} onClaimChallenge={handleClaimChallenge}/>;
       case "darkweb":     return <DarkWebPage         player={player} onContactJob={handleContactJob}/>;
       case "dashboard":  return <Dashboard           player={player} onNavigate={setPage}/>;
