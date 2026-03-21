@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { organizations } from "../data/organizations";
+import { ALL_ORGANIZATIONS as organizations } from "../data/organizations";
 import { getMissionsForFaction, FACTION_RANKS, getRankForMissions, getNextRank } from "../data/factionMissions";
 
 export default function FactionMissionsPage({ player, onMissionClaim }) {

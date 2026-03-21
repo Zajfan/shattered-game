@@ -1,15 +1,17 @@
 const NAV_ITEMS = [
-  { id:"dashboard",   icon:"▣", label:"Dashboard"  },
-  { id:"crimes",      icon:"🗂", label:"Crimes"     },
-  { id:"training",    icon:"💪", label:"Training"   },
-  { id:"factions",    icon:"⚡", label:"Factions"   },
-  { id:"missions",    icon:"📋", label:"Faction Ops"},
-  { id:"crew",        icon:"👥", label:"Crew"       },
-  { id:"market",      icon:"◈", label:"Black Market"},
-  { id:"territory",   icon:"⬡", label:"Territory"  },
-  { id:"prison",      icon:"⊞", label:"Prison"     },
-  { id:"multiplayer", icon:"🌐", label:"Network"    },
-  { id:"profile",     icon:"◉", label:"Profile"    },
+  { id:"dashboard",   icon:"▣", label:"Dashboard"   },
+  { id:"crimes",      icon:"🗂", label:"Crimes"      },
+  { id:"training",    icon:"💪", label:"Training"    },
+  { id:"factions",    icon:"⚡", label:"Factions"    },
+  { id:"missions",    icon:"📋", label:"Faction Ops" },
+  { id:"challenges",  icon:"🎯", label:"Daily"       },
+  { id:"crew",        icon:"👥", label:"Crew"        },
+  { id:"market",      icon:"◈", label:"Market"      },
+  { id:"darkweb",     icon:"🌑", label:"Dark Web"    },
+  { id:"territory",   icon:"⬡", label:"Territory"   },
+  { id:"prison",      icon:"⊞", label:"Prison"      },
+  { id:"multiplayer", icon:"🌐", label:"Network"     },
+  { id:"profile",     icon:"◉", label:"Profile"     },
 ];
 export default function Sidebar({ activePage, onNavigate }) {
   return (

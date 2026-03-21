@@ -1,9 +1,11 @@
 // src/hooks/useGameClock.js — Real-time game engine
 import { useEffect, useRef } from "react";
+import { toast } from "../components/Toasts";
 
-const ENERGY_REGEN_INTERVAL_MS = 3 * 60 * 1000; // 1 energy per 3 minutes
-const TICK_MS = 1000; // tick every second
-const TERRITORY_INCOME_INTERVAL_MS = 60 * 60 * 1000; // passive income every hour
+const ENERGY_REGEN_INTERVAL_MS    = 3 * 60 * 1000;
+const TICK_MS                     = 1000;
+const TERRITORY_INCOME_INTERVAL_MS= 60 * 60 * 1000;
+const HEAT_DECAY_INTERVAL_MS      = 5 * 60 * 1000;
 
 export function useGameClock(player, setPlayer) {
   const lastEnergyRegen   = useRef(Date.now());
@@ -37,7 +39,6 @@ export function useGameClock(player, setPlayer) {
         if (prev.activeTraining) {
           const elapsed = now - prev.activeTraining.startedAt;
           if (elapsed >= prev.activeTraining.durationMs) {
-            // Training complete — apply stat gain
             const { stat, gain, maxEnergyGain, activityId } = prev.activeTraining;
             const newStats = { ...next.stats };
             if (stat) newStats[stat] = (newStats[stat] || 0) + gain;
@@ -49,10 +50,34 @@ export function useGameClock(player, setPlayer) {
               ...(next.trainingLog || []),
             ].slice(0, 20);
             updated = true;
+            toast.success(`Training complete: +${gain} ${stat}`);
           }
         }
 
         // ── Active crime timer countdown ─────────────────────────────────
+        if (prev.activeCrimeTimer) {
+          const elapsed = now - prev.activeCrimeTimer.startedAt;
+          if (elapsed >= prev.activeCrimeTimer.durationMs) {
+            next.activeCrimeTimer = null;
+            updated = true;
+          }
+        }
+
+        // ── Heat decay ────────────────────────────────────────────────────
+        if ((prev.heat || 0) > 0) {
+          const heatElapsed = now - (prev.lastHeatDecay || now);
+          if (heatElapsed >= HEAT_DECAY_INTERVAL_MS) {
+            const decayTicks = Math.floor(heatElapsed / HEAT_DECAY_INTERVAL_MS);
+            const newHeat = Math.max(0, (prev.heat || 0) - decayTicks);
+            const newLevel = newHeat >= 90 ? 5 : newHeat >= 70 ? 4 : newHeat >= 50 ? 3 : newHeat >= 30 ? 2 : newHeat >= 15 ? 1 : 0;
+            next.heat          = newHeat;
+            next.heatLevel     = newLevel;
+            next.lastHeatDecay = now - (heatElapsed % HEAT_DECAY_INTERVAL_MS);
+            updated = true;
+          }
+        }
+
+        // ── Crime cooldown expiry ─────────────────────────────────────────
         if (prev.activeCrimeTimer) {
           const elapsed = now - prev.activeCrimeTimer.startedAt;
           if (elapsed >= prev.activeCrimeTimer.durationMs) {
@@ -72,6 +97,7 @@ export function useGameClock(player, setPlayer) {
             next.lastTerritoryTick = now;
             next.lastIncomeAmount  = hourlyIncome;
             updated = true;
+            toast.income(`Territory income: +$${hourlyIncome.toLocaleString()}`);
           }
         }
 

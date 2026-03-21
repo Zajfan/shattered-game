@@ -17,11 +17,18 @@ import MultiplayerPage     from "./pages/MultiplayerPage";
 import TrainingPage        from "./pages/TrainingPage";
 import FactionMissionsPage from "./pages/FactionMissionsPage";
 import CharacterCreation   from "./pages/CharacterCreation";
+import DailyChallengesPage from "./pages/DailyChallengesPage";
+import DarkWebPage         from "./pages/DarkWebPage";
+import Toasts              from "./components/Toasts";
+import { toast }           from "./components/Toasts";
+import EncounterModal      from "./components/EncounterModal";
 
 import { useGameClock }            from "./hooks/useGameClock";
 import { selectTriggeredEvent }    from "./data/events";
-import { calcLevel, CRIME_XP }     from "./data/levels";
-import { getAllDistricts }          from "./data/territories";
+import { calcLevel, CRIME_XP, LEVEL_UNLOCKS } from "./data/levels";
+import { getAllDistrictsFull as getAllDistricts } from "./data/territories";
+import { getEncounterForCrime }    from "./data/encounters";
+import { snapshotPlayerState, isSameDay } from "./data/dailyChallenges";
 
 const SAVE_KEY   = "shattered_player_v4";
 const SERVER_URL = "http://localhost:3001";
@@ -32,9 +39,10 @@ export default function App() {
   const [player,       setPlayer]       = useState(null);
   const [page,         setPage]         = useState("dashboard");
   const [log,          setLog]          = useState([]);
-  const [activeEvent,  setActiveEvent]  = useState(null);
-  const [levelUpModal, setLevelUpModal] = useState(null);
-  const [serverOnline, setServerOnline] = useState(false);
+  const [activeEvent,    setActiveEvent]    = useState(null);
+  const [activeEncounter,setActiveEncounter]= useState(null);
+  const [levelUpModal,   setLevelUpModal]   = useState(null);
+  const [serverOnline,   setServerOnline]   = useState(false);
 
   const addLog = (msg) => setLog((prev) => [`▸ ${msg}`, ...prev].slice(0, 50));
 
@@ -91,6 +99,7 @@ export default function App() {
     const newLevel = calcLevel(next.xp || 0);
     if (newLevel > oldLevel) {
       setTimeout(() => setLevelUpModal(newLevel), 300);
+      toast.show(`▲ LEVEL ${newLevel} — ${LEVEL_UNLOCKS[newLevel]?.label || "Rank Up"}`, "income", 6000);
       return newLevel;
     }
     return null;
@@ -103,7 +112,9 @@ export default function App() {
       totalLaundered: 0, tier5Attempts: 0, xp: 0,
       completedMissions: [], trainingLog: [],
       activeTraining: null, activeCrimeTimer: null,
-      lastEnergyRegen: Date.now(), lastTerritoryTick: Date.now(),
+      lastEnergyRegen: Date.now(), lastTerritoryTick: Date.now(), lastHeatDecay: Date.now(),
+      claimedChallenges: [], usedContactJobs: {}, contactTrust: {},
+      dailySnapshot: snapshotPlayerState({ ...newPlayer, completedMissions: [], trainingLog: [] }),
     };
     setPlayer(p); setPage("dashboard"); addLog(`New operative: ${p.name}`);
     setTimeout(() => syncToServer(p), 500);
@@ -125,6 +136,13 @@ export default function App() {
       addLog(outcome.success
         ? `${outcome.crime.name} — +$${outcome.cashGain.toLocaleString()} dirty · +${xpGain}XP`
         : `${outcome.crime.name} — FAILED`);
+      if (outcome.success) toast.success(`+$${outcome.cashGain.toLocaleString()} · ${outcome.crime.name}`);
+      else {
+        toast.warn(`Failed: ${outcome.crime.name}`);
+        // Trigger police encounter on failures at elevated heat
+        const encounter = getEncounterForCrime(outcome.crime, player);
+        if (encounter) setTimeout(() => setActiveEncounter(encounter), 600);
+      }
       return {
         ...prev, ...xpNext,
         cash:            outcome.success ? prev.cash + (outcome.cashGain||0) : prev.cash,
@@ -135,6 +153,7 @@ export default function App() {
         timesArrested:   (!outcome.success && Math.random()<0.3 && newHeat>=50) ? prev.timesArrested+1 : prev.timesArrested,
         totalEarned:     outcome.success ? prev.totalEarned+(outcome.cashGain||0) : prev.totalEarned,
         tier5Attempts:   outcome.crime.tier===5 ? (prev.tier5Attempts||0)+1 : (prev.tier5Attempts||0),
+        activeCrimeTimer: outcome.cooldown ? { crimeId: outcome.crime.id, startedAt: Date.now(), durationMs: outcome.cooldown } : prev.activeCrimeTimer,
         stats: {...prev.stats, reputation: outcome.success ? Math.min(100,(prev.stats.reputation||0)+Math.floor(outcome.crime.tier*0.5)) : prev.stats.reputation},
       };
     });
@@ -223,7 +242,7 @@ export default function App() {
     setPlayer((prev) => {
       if (action.type==="start") {
         addLog(`Training started: ${action.activityId?.replace(/_/g," ")}`);
-        return {
+        toast.show(`Training: ${action.activityId?.replace(/_/g," ")} · ${action.durationMs/1000}s`, "info");        return {
           ...prev,
           energy: Math.max(0,(prev.energy||100)-action.energyCost),
           cash:   Math.max(0,(prev.cash||0)-action.cashCost),
@@ -246,12 +265,72 @@ export default function App() {
       ns.reputation = Math.min(100,(ns.reputation||0)+(rewards.rep||0));
       if (rewards.statBonus) for (const [s,v] of Object.entries(rewards.statBonus)) ns[s]=(ns[s]||0)+v;
       addLog(`Mission complete: +$${rewards.cash.toLocaleString()} +${rewards.rep} rep +${rewards.xp}XP`);
+      toast.success(`Mission complete! +$${rewards.cash.toLocaleString()} +${rewards.xp}XP`);
       return {
         ...prev, ...xpNext,
         cash: prev.cash + (rewards.cash||0),
         stats: ns,
         completedMissions: [...(prev.completedMissions||[]), missionId],
       };
+    });
+  };
+
+  const handleEncounterResolve = (encounter, route, resolution) => {
+    setPlayer((prev) => {
+      if (!resolution.success) return prev;
+      const out = resolution.outcome;
+      let next = { ...prev };
+      if (out.heatDelta)   { const nh = Math.max(0, Math.min(100, (next.heat||0) + out.heatDelta)); next.heat = nh; next.heatLevel = recalcHeat(nh); }
+      if (out.healthDelta) { next.health = Math.max(0, Math.min(100, (next.health||100) + out.healthDelta)); }
+      if (out.honorDelta)  { next.stats = { ...next.stats, honor: Math.max(0, Math.min(100, (next.stats?.honor||50) + out.honorDelta)) }; }
+      if (out.arrested)    { addLog(`Arrested during ${encounter.title}`); toast.error("Arrested — heading to prison"); }
+      else                 { addLog(`Escaped: ${encounter.title}`); toast.success("Escaped!"); }
+      return next;
+    });
+  };
+
+  const handleClaimChallenge = (challenge) => {
+    setPlayer((prev) => {
+      if ((prev.claimedChallenges||[]).includes(challenge.id)) return prev;
+      const xpNext = awardXP(challenge.rewards.xp || 0, prev);
+      checkLevelUp(prev, { ...prev, ...xpNext });
+      addLog(`Challenge: ${challenge.label} — +$${challenge.rewards.cash} +${challenge.rewards.xp}XP`);
+      toast.success(`Challenge complete: ${challenge.label} +$${challenge.rewards.cash.toLocaleString()}`);
+      return { ...prev, ...xpNext, cash: prev.cash + (challenge.rewards.cash||0), claimedChallenges: [...(prev.claimedChallenges||[]), challenge.id] };
+    });
+  };
+
+  const handleContactJob = (contact, job) => {
+    setPlayer((prev) => {
+      let next = { ...prev, usedContactJobs: { ...(prev.usedContactJobs||{}), [job.id]: Date.now() } };
+      // Deduct cost
+      next.cash = Math.max(0, (next.cash||0) - (job.price||0));
+      // Apply effects
+      if (job.type === "launder" && job.conversionRate) {
+        const maxDirty = Math.min(job.maxDirty, prev.dirtyCash || 0);
+        const gain = Math.floor(maxDirty * job.conversionRate);
+        next.dirtyCash = Math.max(0, (next.dirtyCash||0) - maxDirty);
+        next.cash = (next.cash||0) + gain;
+        next.totalLaundered = (next.totalLaundered||0) + maxDirty;
+        toast.income(`Laundered $${maxDirty.toLocaleString()} → $${gain.toLocaleString()}`);
+      }
+      if (job.type === "purchase" && job.itemId) {
+        next.inventory = [...(next.inventory||[]), { id: job.itemId, name: job.itemId.replace(/_/g," ") }];
+        toast.success(`Acquired: ${job.itemId.replace(/_/g," ")}`);
+      }
+      if (job.type === "stat_boost" && job.stat) {
+        next.stats = { ...next.stats, [job.stat]: (next.stats?.[job.stat]||0) + job.amount };
+        toast.success(`+${job.amount} ${job.stat}`);
+      }
+      if (job.type === "heat_reduction") {
+        const nh = Math.max(0, (next.heat||0) - job.amount);
+        next.heat = nh; next.heatLevel = recalcHeat(nh);
+        toast.success(`Heat reduced by ${job.amount}%`);
+      }
+      // Increase contact trust
+      next.contactTrust = { ...(next.contactTrust||{}), [contact.id]: Math.min(4, ((next.contactTrust||{})[contact.id]||0) + 1) };
+      addLog(`${contact.alias}: ${job.label}`);
+      return next;
     });
   };
 
@@ -276,6 +355,8 @@ export default function App() {
 
   const renderPage = () => {
     switch (page) {
+      case "challenges":  return <DailyChallengesPage player={player} onClaimChallenge={handleClaimChallenge}/>;
+      case "darkweb":     return <DarkWebPage         player={player} onContactJob={handleContactJob}/>;
       case "dashboard":  return <Dashboard           player={player} onNavigate={setPage}/>;
       case "crimes":     return <CrimesPage          player={player} onCrimeAttempt={handleCrimeAttempt}/>;
       case "factions":   return <FactionsPage        player={player} onJoinFaction={handleJoinFaction}/>;
@@ -328,6 +409,14 @@ export default function App() {
         )}
       </aside>
 
+      {activeEncounter && (
+        <EncounterModal
+          encounter={activeEncounter}
+          player={player}
+          onResolve={handleEncounterResolve}
+          onDismiss={() => setActiveEncounter(null)}
+        />
+      )}
       {activeEvent && (
         <EventModal event={activeEvent} player={player}
           onChoice={handleEventChoice} onDismiss={()=>setActiveEvent(null)}/>
@@ -335,6 +424,7 @@ export default function App() {
       {levelUpModal && (
         <LevelUpModal newLevel={levelUpModal} onDismiss={()=>setLevelUpModal(null)}/>
       )}
+      <Toasts />
     </div>
   );
 }

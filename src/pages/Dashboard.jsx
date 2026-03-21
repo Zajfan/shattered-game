@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { STAT_DEFINITIONS, HEAT_LEVELS } from "../data/playerStats";
 import { calcLevel, xpForLevel, xpForNextLevel, xpProgressInLevel, LEVEL_UNLOCKS } from "../data/levels";
-import { getAllDistricts } from "../data/territories";
+import { getAllDistrictsFull as getAllDistricts } from "../data/territories";
 import { secondsRemaining, formatCountdown } from "../hooks/useGameClock";
 import { getMissionsForFaction, getRankForMissions } from "../data/factionMissions";
-import { organizations } from "../data/organizations";
+import { ALL_ORGANIZATIONS as organizations } from "../data/organizations";
 
 function LiveCountdown({ startedAt, durationMs, label, color = "var(--amber)" }) {
   const [secs, setSecs] = useState(() => secondsRemaining(startedAt, durationMs));

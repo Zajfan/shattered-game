@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { territories, getAllDistricts } from "../data/territories";
+import { ALL_TERRITORIES as territories, getAllDistrictsFull as getAllDistricts, getAllDistrictsFull } from "../data/territories";
 
 const TYPE_COLORS = {
   "Residential":        "#e05555",
@@ -49,7 +49,7 @@ export default function TerritoryPage({ player, onClaimDistrict }) {
   };
 
   const totalWeeklyIncome = ownedIds.reduce((sum, id) => {
-    const d = getAllDistricts().find((d) => d.id === id);
+    const d = getAllDistrictsFull().find((d) => d.id === id);
     return sum + (d?.passiveIncome || 0);
   }, 0);
 

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { STAT_DEFINITIONS, HEAT_LEVELS } from "../data/playerStats";
 import { organizations }                  from "../data/organizations";
 import { CREW_ARCHETYPES }                from "../data/crew";
-import { getAllDistricts }                 from "../data/territories";
+import { getAllDistrictsFull as getAllDistricts } from "../data/territories";
 import { marketItems }                    from "../data/market";
 
 const ACHIEVEMENTS = [

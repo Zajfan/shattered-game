@@ -267,3 +267,200 @@ export const crimes = [
 
 export const getCrimesByTier = (tier) => crimes.filter((c) => c.tier === tier);
 export const getCrimeById = (id) => crimes.find((c) => c.id === id);
+
+// ─── EXPANDED CRIME CONTENT ────────────────────────────────────────────────
+// Added in v0.4.1: more crimes per tier, cooldowns, level requirements
+
+// ─── TIER 1 additions ─────────────────────────────────────────────────────
+export const EXTRA_CRIMES_T1 = [
+  {
+    id: "graffiti_extortion",
+    name: "Tag & Extort",
+    tier: 1, category: "Extortion",
+    description: "Mark a business, then offer to 'protect' it from further vandalism. Classic entry-level hustle.",
+    baseReward: { cash: [60, 250] },
+    baseRisk: 14,
+    timeSeconds: 45,
+    cooldownMs: 30 * 1000,
+    requiredStats: { streetSmarts: 5 },
+    statXP: { streetSmarts: 4, reputation: 3 },
+    realDataNote: "Source: NYPD — graffiti-linked extortion up 18% in small business districts 2022. Common MS-13 entry crime.",
+  },
+  {
+    id: "phone_snatch",
+    name: "Phone Snatch",
+    tier: 1, category: "Theft",
+    description: "Grab phones from distracted pedestrians. High volume, moderate risk. iPhones fetch $200-600 on secondary markets.",
+    baseReward: { cash: [100, 400] },
+    baseRisk: 20,
+    timeSeconds: 15,
+    cooldownMs: 20 * 1000,
+    requiredStats: { dexterity: 4 },
+    statXP: { dexterity: 5, stealth: 3 },
+    realDataNote: "Source: NYPD CompStat — phone snatching accounts for 22% of all robberies in NYC. 'Apple-picking' rings export to West Africa, Eastern Europe.",
+  },
+];
+
+// ─── TIER 2 additions ─────────────────────────────────────────────────────
+export const EXTRA_CRIMES_T2 = [
+  {
+    id: "atm_skimming",
+    name: "ATM Skimming Ring",
+    tier: 2, category: "Fraud",
+    description: "Install card skimming hardware on ATMs. Collect card data in bulk. Low visibility, steady income.",
+    baseReward: { cash: [600, 3000] },
+    baseRisk: 16,
+    timeSeconds: 180,
+    cooldownMs: 2 * 60 * 1000,
+    requiredStats: { techSavvy: 12, dexterity: 8 },
+    statXP: { techSavvy: 12, dexterity: 6 },
+    realDataNote: "Source: Secret Service — $1B lost annually to ATM skimming. Eastern European crime rings dominate; skimmer hardware sold on Telegram for $200-800.",
+  },
+  {
+    id: "catalytic_converter",
+    name: "Catalytic Converter Theft",
+    tier: 2, category: "Theft",
+    description: "Strip catalytic converters from vehicles. Palladium and rhodium content worth $200-2,000 each. Surge since 2021.",
+    baseReward: { cash: [400, 1800] },
+    baseRisk: 18,
+    timeSeconds: 90,
+    cooldownMs: 90 * 1000,
+    requiredStats: { dexterity: 10, techSavvy: 5 },
+    statXP: { dexterity: 8, techSavvy: 5 },
+    realDataNote: "Source: NICB — catalytic converter thefts rose 1,215% from 2019-2022. Toyota Prius, Ford F-250 most targeted. Recyclers pay $50-300 each, no questions.",
+  },
+  {
+    id: "insurance_fraud",
+    name: "Insurance Fraud",
+    tier: 2, category: "Fraud",
+    description: "Stage accidents, fake injuries, inflate claims. White-collar entry-level. Low heat, high reward.",
+    baseReward: { cash: [1500, 8000] },
+    baseRisk: 12,
+    timeSeconds: 300,
+    cooldownMs: 5 * 60 * 1000,
+    requiredStats: { intelligence: 14, connections: 8 },
+    statXP: { intelligence: 10, connections: 8 },
+    realDataNote: "Source: FBI — insurance fraud costs $40B annually in the US. Staged accident rings documented in NY, FL, CA. Average scheme nets $3,200 per event.",
+  },
+];
+
+// ─── TIER 3 additions ─────────────────────────────────────────────────────
+export const EXTRA_CRIMES_T3 = [
+  {
+    id: "cargo_theft",
+    name: "Cargo Heist",
+    tier: 3, category: "Theft",
+    description: "Intercept freight shipments — electronics, pharmaceuticals, luxury goods. Organized logistics operation.",
+    baseReward: { cash: [8000, 40000] },
+    baseRisk: 25,
+    timeSeconds: 3600,
+    cooldownMs: 10 * 60 * 1000,
+    crewRequired: 2,
+    requiredStats: { streetSmarts: 20, connections: 18, dexterity: 12 },
+    statXP: { connections: 18, streetSmarts: 15 },
+    realDataNote: "Source: FreightWatch — cargo theft averages $223M/year. Electronics #1 target. I-95 corridor (NY–Miami) is the highest-risk route in the US.",
+  },
+  {
+    id: "loan_sharking",
+    name: "Loan Shark Operation",
+    tier: 3, category: "Financial Crime",
+    description: "Extend illegal high-interest loans. Weekly vig collection. Classic OCG passive income stream.",
+    baseReward: { cash: [3000, 15000] },
+    baseRisk: 15,
+    timeSeconds: 7200,
+    cooldownMs: 8 * 60 * 1000,
+    requiredStats: { reputation: 22, muscle: 18, connections: 20 },
+    statXP: { reputation: 18, connections: 15 },
+    realDataNote: "Source: Europol — loan sharking generates €3.5B/year across EU. Predatory interest: 100-500% APR. Italian-American Mafia built NYC's construction industry on it.",
+  },
+  {
+    id: "gambling_ring",
+    name: "Illegal Gambling Ring",
+    tier: 3, category: "Gambling",
+    description: "Run underground poker rooms, sports books, numbers rackets. Yakuza and Italian mobs built empires on this.",
+    baseReward: { cash: [5000, 25000] },
+    baseRisk: 18,
+    timeSeconds: 10800,
+    cooldownMs: 15 * 60 * 1000,
+    crewRequired: 2,
+    requiredStats: { connections: 22, intelligence: 18, streetSmarts: 15 },
+    statXP: { connections: 20, intelligence: 15 },
+    realDataNote: "Source: AGA — illegal gambling market in US estimated at $150B+/year. Yakuza generated $10B from gambling pre-crackdown. NYC alone has 100+ underground clubs.",
+  },
+];
+
+// ─── TIER 4 additions ─────────────────────────────────────────────────────
+export const EXTRA_CRIMES_T4 = [
+  {
+    id: "contract_killing",
+    name: "Contract Killing",
+    tier: 4, category: "Violence",
+    description: "Professional elimination. Cartels and mafias pay per job. Extreme risk, extreme reward. Adds Interpol flags.",
+    baseReward: { cash: [25000, 200000] },
+    baseRisk: 45,
+    timeSeconds: 86400,
+    cooldownMs: 30 * 60 * 1000,
+    crewRequired: 1,
+    requiredStats: { nerve: 45, stealth: 40, muscle: 35 },
+    statXP: { nerve: 35, reputation: 30 },
+    realDataNote: "Source: DEA/DOJ — cartel sicarios paid $500-$50,000 per kill. Bratva 'wet work' documented in 17 US cities. FBI VCMO tracks contract killings as distinct category.",
+  },
+  {
+    id: "art_forgery",
+    name: "Art Forgery Ring",
+    tier: 4, category: "Fraud",
+    description: "Produce and sell high-quality forgeries through corrupt auction houses. Low heat, enormous margins.",
+    baseReward: { cash: [40000, 300000] },
+    baseRisk: 10,
+    timeSeconds: 259200,
+    cooldownMs: 20 * 60 * 1000,
+    requiredStats: { intelligence: 42, connections: 38 },
+    statXP: { intelligence: 35, connections: 25 },
+    realDataNote: "Source: Interpol — art fraud generates $6-8B annually. Wolfgang Beltracchi forged 300+ works before arrest. FBI Art Crime Team recovered $900M in stolen art since 2004.",
+  },
+];
+
+// ─── TIER 5 additions ─────────────────────────────────────────────────────
+export const EXTRA_CRIMES_T5 = [
+  {
+    id: "state_capture",
+    name: "Political Corruption",
+    tier: 5, category: "Corruption",
+    description: "Buy politicians, judges, and police chiefs. 'Capture' state infrastructure to work for your organization.",
+    baseReward: { cash: [200000, 2000000], influence: true },
+    baseRisk: 20,
+    timeSeconds: 1209600,
+    cooldownMs: 60 * 60 * 1000,
+    crewRequired: 5,
+    requiredStats: { connections: 85, intelligence: 75, reputation: 85 },
+    statXP: { connections: 70, reputation: 60 },
+    realDataNote: "Source: Transparency International — 'state capture' by OCGs documented in 30+ countries. Sinaloa spent $100M bribing Mexican officials per US indictments. Most sophisticated criminal activity.",
+  },
+  {
+    id: "crypto_exchange_hack",
+    name: "Crypto Exchange Hack",
+    tier: 5, category: "Cybercrime",
+    description: "Target a major cryptocurrency exchange. North Korea's Lazarus Group stole $600M from Ronin Network alone.",
+    baseReward: { cash: [1000000, 10000000] },
+    baseRisk: 30,
+    timeSeconds: 604800,
+    cooldownMs: 45 * 60 * 1000,
+    crewRequired: 3,
+    requiredStats: { techSavvy: 80, intelligence: 75 },
+    statXP: { techSavvy: 65, intelligence: 50 },
+    realDataNote: "Source: Chainalysis — $3.8B stolen from crypto in 2022. Lazarus Group (NK) responsible for 44% of 2022 crypto theft. FBI recovered $30M from Ronin hack.",
+  },
+];
+
+// Merged full crime list (re-export with extras)
+export const ALL_CRIMES = [
+  ...crimes,
+  ...EXTRA_CRIMES_T1,
+  ...EXTRA_CRIMES_T2,
+  ...EXTRA_CRIMES_T3,
+  ...EXTRA_CRIMES_T4,
+  ...EXTRA_CRIMES_T5,
+];
+
+export const getAllCrimesByTier = (tier) => ALL_CRIMES.filter((c) => c.tier === tier);
+export const getCrimeByIdFull   = (id)   => ALL_CRIMES.find((c) => c.id === id);

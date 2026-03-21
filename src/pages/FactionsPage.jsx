@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { organizations, ORGANIZATION_TYPES } from "../data/organizations";
+import { ALL_ORGANIZATIONS, ORGANIZATION_TYPES } from "../data/organizations";
+import { calcLevel } from "../data/levels";
 
 const TYPE_COLORS = {
   [ORGANIZATION_TYPES.STREET_GANG]: "#e05555",
@@ -14,9 +15,11 @@ export default function FactionsPage({ player, onJoinFaction }) {
   const [selected, setSelected] = useState(null);
 
   const types = ["all", ...Object.values(ORGANIZATION_TYPES)];
-  const filtered = filter === "all" ? organizations : organizations.filter((o) => o.type === filter);
+  const filtered = filter === "all" ? ALL_ORGANIZATIONS : ALL_ORGANIZATIONS.filter((o) => o.type === filter);
 
+  const playerLevel = calcLevel(player?.xp || 0);
   const canJoin = (org) =>
+    playerLevel >= (org.levelReq || 1) &&
     Object.entries(org.joinRequirements || {}).every(
       ([stat, val]) => (player.stats[stat] || 0) >= val
     );

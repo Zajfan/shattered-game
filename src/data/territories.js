@@ -349,3 +349,180 @@ export const getDistrictById = (id) => {
   }
   return null;
 };
+
+// ─── EXPANDED CITIES (v0.4.1) ────────────────────────────────────────────
+
+export const EXTRA_TERRITORIES = [
+  // ════════════════════════════════════════════════════════════════════════
+  // BALTIMORE
+  // ════════════════════════════════════════════════════════════════════════
+  {
+    id: "baltimore",
+    city: "Baltimore",
+    state: "MD",
+    nickname: "Charm City",
+    crimeIndex: 92,
+    fbiViolentCrimeRate: 2027,
+    dominantOrgs: ["bloods", "18th_street"],
+    realDataNote: "Source: FBI 2022 — Baltimore's homicide rate (58/100k) exceeds every US city above 100k population. Open-air drug markets in West Baltimore documented by BPD and depicted in The Wire.",
+    districts: [
+      {
+        id: "balt_west",
+        name: "West Baltimore",
+        type: DISTRICT_TYPES.RESIDENTIAL,
+        crimeHotspot: true,
+        controlledBy: null,
+        passiveIncome: 3200,
+        incomeType: "Drug / Street",
+        crimeBonus: { drug_dealing_small: 30, street_mugging: 20, drug_trafficking_mid: 20 },
+        requiredRep: 18,
+        requiredLevel: 1,
+        heatModifier: 1.5,
+        realDataNote: "Penn-North and Sandtown-Winchester — highest drug arrest density in Maryland. Open-air heroin/fentanyl markets operate daily. Police coverage among lowest in city.",
+      },
+      {
+        id: "balt_port",
+        name: "Port of Baltimore",
+        type: DISTRICT_TYPES.PORT,
+        crimeHotspot: false,
+        controlledBy: null,
+        passiveIncome: 14000,
+        incomeType: "Smuggling / Contraband",
+        crimeBonus: { drug_cartel_operation: 25, human_smuggling: 25, arms_trafficking: 20 },
+        requiredRep: 50,
+        requiredLevel: 7,
+        heatModifier: 1.3,
+        realDataNote: "CBP Baltimore Field Office — major East Coast container port. 2023: 1,200+ lbs cocaine seized in single container. Port of entry for significant East Coast drug supply.",
+      },
+    ],
+  },
+
+  // ════════════════════════════════════════════════════════════════════════
+  // HOUSTON
+  // ════════════════════════════════════════════════════════════════════════
+  {
+    id: "houston",
+    city: "Houston",
+    state: "TX",
+    nickname: "Space City",
+    crimeIndex: 68,
+    fbiViolentCrimeRate: 975,
+    dominantOrgs: ["gulf_cartel", "ms13", "cjng"],
+    realDataNote: "Source: HPD 2023 / DEA — Houston is the #1 US hub for cartel drug distribution. Proximity to Laredo and McAllen border crossings makes it the primary inland distribution point for Gulf Cartel and CJNG product.",
+    districts: [
+      {
+        id: "hou_third_ward",
+        name: "Third Ward / Sunnyside",
+        type: DISTRICT_TYPES.RESIDENTIAL,
+        crimeHotspot: true,
+        controlledBy: null,
+        passiveIncome: 2800,
+        incomeType: "Drug / Street Crime",
+        crimeBonus: { drug_dealing_small: 22, street_mugging: 18, armed_robbery: 15 },
+        requiredRep: 18,
+        requiredLevel: 2,
+        heatModifier: 1.3,
+        realDataNote: "HPD: Third Ward and Sunnyside consistently rank top-3 in Houston for violent crime. Crips and Bloods chapters active alongside newer cartel-affiliated street crews.",
+      },
+      {
+        id: "hou_port",
+        name: "Port of Houston",
+        type: DISTRICT_TYPES.PORT,
+        crimeHotspot: false,
+        controlledBy: null,
+        passiveIncome: 22000,
+        incomeType: "Cartel / Drug Wholesale",
+        crimeBonus: { drug_cartel_operation: 40, arms_trafficking: 30, human_smuggling: 28 },
+        requiredRep: 60,
+        requiredLevel: 8,
+        heatModifier: 1.4,
+        realDataNote: "DEA Houston Field Division — Port of Houston is the single largest US entry point for cartel cocaine and fentanyl by volume. Gulf Cartel controls primary contacts. $2B+ in seizures in 2022.",
+      },
+      {
+        id: "hou_energy_corridor",
+        name: "Energy Corridor / Katy",
+        type: DISTRICT_TYPES.FINANCIAL,
+        crimeHotspot: false,
+        controlledBy: null,
+        passiveIncome: 16000,
+        incomeType: "Financial Crime / Money Laundering",
+        crimeBonus: { money_laundering: 30, identity_theft: 25, cyber_crime_operation: 20 },
+        requiredRep: 50,
+        requiredLevel: 7,
+        heatModifier: 0.7,
+        realDataNote: "FinCEN — Houston's energy sector is a documented money laundering vector. Shell companies tied to cartel proceeds identified in 40+ DOJ prosecutions linked to Houston-area LLCs and energy companies.",
+      },
+    ],
+  },
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ATLANTA
+  // ════════════════════════════════════════════════════════════════════════
+  {
+    id: "atlanta",
+    city: "Atlanta",
+    state: "GA",
+    nickname: "The A",
+    crimeIndex: 78,
+    fbiViolentCrimeRate: 1189,
+    dominantOrgs: ["bloods", "ms13"],
+    realDataNote: "Source: APD 2023 / FBI — Atlanta is the primary drug distribution hub for the southeastern US. DEA calls it the 'Supercenter' of US drug distribution — every major cartel maintains a presence.",
+    districts: [
+      {
+        id: "atl_vine_city",
+        name: "Vine City / English Avenue",
+        type: DISTRICT_TYPES.RESIDENTIAL,
+        crimeHotspot: true,
+        controlledBy: null,
+        passiveIncome: 2600,
+        incomeType: "Drug / Protection",
+        crimeBonus: { drug_dealing_small: 24, protection_racket: 18, street_mugging: 16 },
+        requiredRep: 15,
+        requiredLevel: 2,
+        heatModifier: 1.3,
+        realDataNote: "APD: Vine City/English Avenue corridor — highest violent crime density in Atlanta. Open drug markets document by GBI. Adjacent to Mercedes-Benz Stadium creates unusual mix of foot traffic.",
+      },
+      {
+        id: "atl_airport",
+        name: "Hartsfield-Jackson / Airport District",
+        type: DISTRICT_TYPES.PORT,
+        crimeHotspot: false,
+        controlledBy: null,
+        passiveIncome: 20000,
+        incomeType: "Drug Transit / Trafficking",
+        crimeBonus: { drug_cartel_operation: 30, human_smuggling: 22, drug_trafficking_mid: 28 },
+        requiredRep: 55,
+        requiredLevel: 7,
+        heatModifier: 1.3,
+        realDataNote: "DEA Atlanta — Hartsfield-Jackson is the world's busiest airport and a documented primary transit hub for cocaine and fentanyl to eastern US markets. TSA seizures up 45% in 2023.",
+      },
+      {
+        id: "atl_buckhead",
+        name: "Buckhead Financial",
+        type: DISTRICT_TYPES.FINANCIAL,
+        crimeHotspot: false,
+        controlledBy: null,
+        passiveIncome: 12000,
+        incomeType: "Financial Crime",
+        crimeBonus: { money_laundering: 28, identity_theft: 22, cyber_crime_operation: 18 },
+        requiredRep: 45,
+        requiredLevel: 6,
+        heatModifier: 0.75,
+        realDataNote: "FinCEN — Buckhead hosts 40+ bank headquarters. Georgia leads US in identity theft complaints per capita. Significant SBA fraud and PPP loan fraud documented in Atlanta metro during 2020-2022.",
+      },
+    ],
+  },
+];
+
+export const ALL_TERRITORIES = [...territories, ...EXTRA_TERRITORIES];
+
+export const getAllDistrictsFull = () =>
+  ALL_TERRITORIES.flatMap((t) => t.districts.map((d) => ({ ...d, city: t.city, cityId: t.id })));
+
+export const getDistrictByIdFull = (id) => {
+  for (const t of ALL_TERRITORIES) {
+    const d = t.districts.find((d) => d.id === id);
+    if (d) return { ...d, city: t.city, cityId: t.id };
+  }
+  return null;
+};
