@@ -1,0 +1,247 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oswald:wght@300;400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap');
+
+:root {
+  /* Core palette — redacted case file */
+  --bg-void:       #0a0a0a;
+  --bg-surface:    #111111;
+  --bg-raised:     #1a1a1a;
+  --bg-card:       #141414;
+  --border:        #2a2a2a;
+  --border-accent: #3d3020;
+
+  /* Amber / evidence tape */
+  --amber:         #c8922a;
+  --amber-dim:     #7a5518;
+  --amber-glow:    rgba(200, 146, 42, 0.12);
+
+  /* Text */
+  --text-primary:  #e8dcc8;
+  --text-secondary:#9a8f7f;
+  --text-muted:    #5a5248;
+  --text-redacted: #2a2a2a;
+
+  /* Status colors */
+  --green:   #3d8c5a;
+  --red:     #8c3d3d;
+  --red-hot: #c0392b;
+  --blue:    #3d5a8c;
+  --purple:  #6b3d8c;
+  --yellow:  #8c7a3d;
+
+  /* Typography */
+  --font-mono:    'Share Tech Mono', monospace;
+  --font-display: 'Oswald', sans-serif;
+  --font-body:    'Crimson Pro', Georgia, serif;
+
+  /* Spacing */
+  --radius:  2px;
+  --radius-md: 4px;
+
+  /* Scanline effect */
+  --scanline: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.05) 2px,
+    rgba(0,0,0,0.05) 4px
+  );
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-image: 
+    var(--scanline),
+    radial-gradient(ellipse at 50% 0%, rgba(200,146,42,0.04) 0%, transparent 60%);
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-void); }
+::-webkit-scrollbar-thumb { background: var(--amber-dim); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--amber); }
+
+/* ── Typography ────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.amber { color: var(--amber); }
+.dim   { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+
+/* ── Layout ────────────────────────────────────────────────────────── */
+.app-shell {
+  display: grid;
+  grid-template-rows: 48px 1fr;
+  grid-template-columns: 220px 1fr 280px;
+  grid-template-areas:
+    "topbar topbar topbar"
+    "sidebar main rightpanel";
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Cards / Panels ────────────────────────────────────────────────── */
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.panel-header {
+  font-family: var(--font-mono);
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--amber);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────── */
+.btn {
+  font-family: var(--font-mono);
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: var(--amber-glow);
+}
+
+.btn-primary {
+  border-color: var(--amber);
+  color: var(--bg-void);
+  background: var(--amber);
+}
+
+.btn-primary:hover {
+  background: #d9a030;
+  border-color: #d9a030;
+  color: var(--bg-void);
+}
+
+.btn-danger {
+  border-color: var(--red);
+  color: #c0392b;
+}
+
+.btn-danger:hover {
+  background: rgba(192, 57, 43, 0.15);
+  border-color: var(--red-hot);
+  color: var(--red-hot);
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Progress bars ─────────────────────────────────────────────────── */
+.progress-bar {
+  height: 4px;
+  background: var(--bg-raised);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--amber);
+  transition: width 0.3s ease;
+}
+
+.progress-fill.red   { background: var(--red-hot); }
+.progress-fill.green { background: var(--green); }
+.progress-fill.blue  { background: var(--blue); }
+
+/* ── Tier badges ───────────────────────────────────────────────────── */
+.tier-badge {
+  font-family: var(--font-mono);
+  font-size: 0.6em;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+}
+.tier-1 { background: rgba(61,140,90,0.15);  color: #3d8c5a; border: 1px solid #3d8c5a; }
+.tier-2 { background: rgba(140,122,61,0.15); color: #d4a827; border: 1px solid #8c7a3d; }
+.tier-3 { background: rgba(61,90,140,0.15);  color: #5a7ec8; border: 1px solid #3d5a8c; }
+.tier-4 { background: rgba(107,61,140,0.15); color: #a85fd4; border: 1px solid #6b3d8c; }
+.tier-5 { background: rgba(140,61,61,0.15);  color: #e05555; border: 1px solid #8c3d3d; }
+
+/* ── Dividers ──────────────────────────────────────────────────────── */
+hr.dark {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 12px 0;
+}
+
+/* ── Animations ────────────────────────────────────────────────────── */
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  92%       { opacity: 1; }
+  93%       { opacity: 0.4; }
+  94%       { opacity: 1; }
+  96%       { opacity: 0.7; }
+  97%       { opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-amber {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200,146,42,0); }
+  50%       { box-shadow: 0 0 12px 2px rgba(200,146,42,0.25); }
+}
+
+.animate-in { animation: fadeIn 0.3s ease forwards; }
+.flicker    { animation: flicker 8s infinite; }
