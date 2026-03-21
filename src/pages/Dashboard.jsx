@@ -121,17 +121,35 @@ export default function Dashboard({ player, onNavigate }) {
           </div>
 
           <div className="energy-card">
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
               <span className="label">Energy</span>
               <span className="mono" style={{color:"#3d8c5a",fontSize:"0.82em"}}>{player.energy||0} / {player.maxEnergy||100}</span>
             </div>
-            <div className="progress-bar" style={{height:7}}>
+            <div className="progress-bar" style={{height:6}}>
               <div className="progress-fill green" style={{width:`${energyPct}%`,transition:"width 0.5s"}}/>
             </div>
             {(player.energy||0)<(player.maxEnergy||100) && (
-              <div className="mono muted" style={{fontSize:"0.6em",marginTop:3}}>Full in ~{energyMins}min · +1 energy / 3min</div>
+              <div className="mono muted" style={{fontSize:"0.6em",marginTop:2}}>Full in ~{energyMins}min · +1 energy / 3min</div>
             )}
           </div>
+
+          {/* Health */}
+          {(player.health||100) < 100 && (() => {
+            const hp    = player.health || 0;
+            const hpClr = hp > 60 ? "#3d8c5a" : hp > 30 ? "#e67e22" : "#c0392b";
+            return (
+              <div className="energy-card" style={{ borderColor: hpClr + "66" }}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span className="label">Health</span>
+                  <span className="mono" style={{color:hpClr,fontSize:"0.82em"}}>{hp}% — recovering</span>
+                </div>
+                <div className="progress-bar" style={{height:6}}>
+                  <div className="progress-fill" style={{width:`${hp}%`,background:hpClr,transition:"width 0.5s"}}/>
+                </div>
+                <div className="mono muted" style={{fontSize:"0.6em",marginTop:2}}>+1 HP / 10min · or heal at Settings</div>
+              </div>
+            );
+          })()}
 
           {(player.activeTraining||player.activeCrimeTimer) && (
             <div className="active-timers-card">

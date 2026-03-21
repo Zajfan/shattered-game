@@ -20,10 +20,12 @@ import CharacterCreation   from "./pages/CharacterCreation";
 import DailyChallengesPage from "./pages/DailyChallengesPage";
 import DarkWebPage         from "./pages/DarkWebPage";
 import SettingsPage        from "./pages/SettingsPage";
-import NewsFeedPage        from "./pages/NewsFeedPage";
+import StatisticsPage      from "./pages/StatisticsPage";
+import TutorialOverlay     from "./components/TutorialOverlay";
 import Toasts              from "./components/Toasts";
 import { toast }           from "./components/Toasts";
 import EncounterModal      from "./components/EncounterModal";
+import RightPanel          from "./components/RightPanel";
 
 import { useGameClock }            from "./hooks/useGameClock";
 import { selectTriggeredEvent }    from "./data/events";
@@ -43,6 +45,7 @@ export default function App() {
   const [log,          setLog]          = useState([]);
   const [activeEvent,    setActiveEvent]    = useState(null);
   const [activeEncounter,setActiveEncounter]= useState(null);
+  const [showTutorial,   setShowTutorial]   = useState(false);
   const [levelUpModal,   setLevelUpModal]   = useState(null);
   const [serverOnline,   setServerOnline]   = useState(false);
 
@@ -119,6 +122,8 @@ export default function App() {
       dailySnapshot: snapshotPlayerState({ ...newPlayer, completedMissions: [], trainingLog: [] }),
     };
     setPlayer(p); setPage("dashboard"); addLog(`New operative: ${p.name}`);
+    setShowTutorial(true);
+    setShowTutorial(true);
     setTimeout(() => syncToServer(p), 500);
   };
 
@@ -131,18 +136,22 @@ export default function App() {
   // Handlers
   const handleCrimeAttempt = (outcome) => {
     setPlayer((prev) => {
-      const newHeat = Math.min(100, (prev.heat||0) + outcome.heatGain);
-      const xpGain  = outcome.success ? (CRIME_XP[outcome.crime.tier] || 20) : 0;
-      const xpNext  = awardXP(xpGain, prev);
+      const newHeat   = Math.min(100, (prev.heat||0) + outcome.heatGain);
+      const autoArrest= !outcome.success && newHeat >= 80 && Math.random() < 0.4;
+      const xpGain    = outcome.success ? (CRIME_XP[outcome.crime.tier] || 20) : 0;
+      const xpNext    = awardXP(xpGain, prev);
       checkLevelUp(prev, {...prev, ...xpNext});
       addLog(outcome.success
         ? `${outcome.crime.name} — +$${outcome.cashGain.toLocaleString()} dirty · +${xpGain}XP`
-        : `${outcome.crime.name} — FAILED`);
-      if (outcome.success) toast.success(`+$${outcome.cashGain.toLocaleString()} · ${outcome.crime.name}`);
-      else {
+        : `${outcome.crime.name} — FAILED${autoArrest ? " — ARRESTED" : ""}`);
+      if (outcome.success) {
+        toast.success(`+$${outcome.cashGain.toLocaleString()} · ${outcome.crime.name}`);
+      } else if (autoArrest) {
+        toast.error("Arrested at the scene");
+        setTimeout(() => setPage("prison"), 900);
+      } else {
         toast.warn(`Failed: ${outcome.crime.name}`);
-        // Trigger police encounter on failures at elevated heat
-        const encounter = getEncounterForCrime(outcome.crime, player);
+        const encounter = getEncounterForCrime(outcome.crime, prev);
         if (encounter) setTimeout(() => setActiveEncounter(encounter), 600);
       }
       return {
@@ -152,7 +161,8 @@ export default function App() {
         heat:            newHeat, heatLevel: recalcHeat(newHeat),
         crimesAttempted: prev.crimesAttempted + 1,
         crimesSucceeded: outcome.success ? prev.crimesSucceeded + 1 : prev.crimesSucceeded,
-        timesArrested:   (!outcome.success && Math.random()<0.3 && newHeat>=50) ? prev.timesArrested+1 : prev.timesArrested,
+        timesArrested:   autoArrest ? (prev.timesArrested||0) + 1 : prev.timesArrested,
+        isInCustody:     autoArrest ? true : (prev.isInCustody || false),
         totalEarned:     outcome.success ? prev.totalEarned+(outcome.cashGain||0) : prev.totalEarned,
         tier5Attempts:   outcome.crime.tier===5 ? (prev.tier5Attempts||0)+1 : (prev.tier5Attempts||0),
         activeCrimeTimer: outcome.cooldown ? { crimeId: outcome.crime.id, startedAt: Date.now(), durationMs: outcome.cooldown } : prev.activeCrimeTimer,
@@ -210,7 +220,9 @@ export default function App() {
       if (action.type==="release") {
         const nh=Math.max(0,(prev.heat||0)-60);
         addLog("Released from custody.");
-        return {...prev, prisonDays:0, prisonSentence:0, heat:nh, heatLevel:recalcHeat(nh), energy:100};
+        toast.success("Released — heat cleared");
+        setTimeout(() => setPage("dashboard"), 400);
+        return {...prev, prisonDays:0, prisonSentence:0, heat:nh, heatLevel:recalcHeat(nh), energy:100, isInCustody:false};
       }
       if (action.type==="missed_payroll") return {...prev, crew:(prev.crew||[]).map(m=>({...m,loyalty:Math.max(1,m.loyalty-1)}))};
       return prev;
@@ -285,8 +297,17 @@ export default function App() {
       if (out.heatDelta)   { const nh = Math.max(0, Math.min(100, (next.heat||0) + out.heatDelta)); next.heat = nh; next.heatLevel = recalcHeat(nh); }
       if (out.healthDelta) { next.health = Math.max(0, Math.min(100, (next.health||100) + out.healthDelta)); }
       if (out.honorDelta)  { next.stats = { ...next.stats, honor: Math.max(0, Math.min(100, (next.stats?.honor||50) + out.honorDelta)) }; }
-      if (out.arrested)    { addLog(`Arrested during ${encounter.title}`); toast.error("Arrested — heading to prison"); }
-      else                 { addLog(`Escaped: ${encounter.title}`); toast.success("Escaped!"); }
+      if (out.arrested) {
+        addLog(`Arrested during ${encounter.title}`);
+        toast.error("Arrested — you're being booked");
+        next.timesArrested = (next.timesArrested || 0) + 1;
+        next.isInCustody   = true;
+        setTimeout(() => setPage("prison"), 800);
+      } else {
+        addLog(`Escaped: ${encounter.title}`);
+        toast.success("Escaped!");
+        next.encountersEscaped = (next.encountersEscaped || 0) + 1;
+      }
       return next;
     });
   };
@@ -377,14 +398,15 @@ export default function App() {
       return next;
     });
     addLog(`Event: ${event.title} → ${choice.label}`);
+    setPlayer(prev => ({ ...prev, eventsResolved: (prev.eventsResolved||0)+1 }));
   };
 
   if (!player) return <CharacterCreation onCreate={handleCreate} />;
 
   const renderPage = () => {
     switch (page) {
-      case "settings":    return <SettingsPage      player={player} onReset={handleReset} onHeal={handleHeal} onRestoreEnergy={handleRestoreEnergy}/>;
-      case "news":        return <NewsFeedPage       player={player}/>;
+      case "statistics":  return <StatisticsPage    player={player}/>;
+      case "settings":    return <SettingsPage      player={player} onReset={handleReset} onHeal={handleHeal} onRestoreEnergy={handleRestoreEnergy}/>;      case "news":        return <NewsFeedPage       player={player}/>;
       case "challenges":  return <DailyChallengesPage player={player} onClaimChallenge={handleClaimChallenge}/>;
       case "darkweb":     return <DarkWebPage         player={player} onContactJob={handleContactJob}/>;
       case "dashboard":  return <Dashboard           player={player} onNavigate={setPage}/>;
@@ -405,51 +427,22 @@ export default function App() {
   return (
     <div className="app-shell">
       <TopBar player={player} serverOnline={serverOnline}/>
-      <Sidebar activePage={page} onNavigate={setPage}/>
+      <Sidebar activePage={page} onNavigate={setPage} player={player}/>
       <main style={{gridArea:"main",overflow:"hidden",display:"flex",flexDirection:"column"}}>
         {renderPage()}
       </main>
       <aside className="activity-log-panel">
-        <div className="panel-header">Activity Log</div>
-        <div className="mono muted" style={{fontSize:"0.7em",lineHeight:2.2}}>
-          {log.length===0 && <div style={{opacity:.5}}>▸ Awaiting activity...</div>}
-          {log.map((e,i)=><div key={i} style={{opacity:i===0?1:Math.max(0.3,1-i*0.06)}}>{e}</div>)}
-        </div>
-        {player.crew?.length>0 && (
-          <>
-            <div className="panel-header" style={{marginTop:16}}>Crew</div>
-            <div className="mono" style={{fontSize:"0.7em",lineHeight:2}}>
-              {player.crew.map(m=>(
-                <div key={m.uid} style={{display:"flex",justifyContent:"space-between"}}>
-                  <span style={{color:"var(--text-secondary)"}}>{m.alias}</span>
-                  <span style={{color:m.loyalty<=2?"#c0392b":"var(--amber-dim)"}}>{"▮".repeat(m.loyalty)}{"▯".repeat(5-m.loyalty)}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-        {player.heat>=70 && (
-          <>
-            <div className="panel-header" style={{marginTop:16,color:"#c0392b"}}>⚠ Heat Warning</div>
-            <div className="mono" style={{fontSize:"0.7em",color:"#c0392b",lineHeight:1.8}}>
-              {player.heat>=95?<div>▸ Federal manhunt</div>:player.heat>=80?<div>▸ Arrest risk: HIGH</div>:<div>▸ Under surveillance</div>}
-              <div>▸ Lay low or launder</div>
-            </div>
-          </>
-        )}
+        <RightPanel player={player} log={log} onNavigate={setPage} />
       </aside>
 
+      {showTutorial && (
+        <TutorialOverlay onDismiss={() => setShowTutorial(false)} onNavigate={(p) => { setPage(p); setShowTutorial(false); }}/>
+      )}
       {activeEncounter && (
-        <EncounterModal
-          encounter={activeEncounter}
-          player={player}
-          onResolve={handleEncounterResolve}
-          onDismiss={() => setActiveEncounter(null)}
-        />
+        <EncounterModal encounter={activeEncounter} player={player} onResolve={handleEncounterResolve} onDismiss={() => setActiveEncounter(null)}/>
       )}
       {activeEvent && (
-        <EventModal event={activeEvent} player={player}
-          onChoice={handleEventChoice} onDismiss={()=>setActiveEvent(null)}/>
+        <EventModal event={activeEvent} player={player} onChoice={handleEventChoice} onDismiss={()=>setActiveEvent(null)}/>
       )}
       {levelUpModal && (
         <LevelUpModal newLevel={levelUpModal} onDismiss={()=>setLevelUpModal(null)}/>
