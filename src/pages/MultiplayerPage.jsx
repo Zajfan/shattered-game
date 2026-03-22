@@ -95,7 +95,7 @@ export default function MultiplayerPage({ player }) {
 
       {/* Tabs */}
       <div className="multi-tabs">
-        {[["leaderboard","▣ Leaderboard"], ["world","🌐 World Feed"], ["attacks","⚔️ My Attacks"]].map(([id, label]) => (
+        {[["leaderboard","▣ Leaderboard"], ["world","🌐 World Feed"], ["attacks","⚔️ My Attacks"], ["lookup","🔍 Player Lookup"]].map(([id, label]) => (
           <button key={id} className={`multi-tab ${tab === id ? "active" : ""}`} onClick={() => setTab(id)}>
             {label}
           </button>
@@ -343,6 +343,11 @@ export default function MultiplayerPage({ player }) {
         </div>
       )}
 
+      {/* ── PLAYER LOOKUP ── */}
+      {tab === "lookup" && (
+        <PlayerLookup online={online} myId={player?.id} onAttack={(t) => { setAttackTarget(t); setTab("leaderboard"); }} />
+      )}
+
       <style>{`
         .multi-page { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
         .page-header { display: flex; flex-direction: column; gap: 4px; }
@@ -404,7 +409,125 @@ export default function MultiplayerPage({ player }) {
         }
         .atk-win  { border-left-color: #3d8c5a; }
         .atk-loss { border-left-color: #c0392b; }
+        .lookup-card { background: var(--bg-card); border: 1px solid var(--border); padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+        .lookup-profile { background: var(--bg-card); border: 1px solid var(--amber); padding: 16px; display: flex; flex-direction: column; gap: 10px; max-width: 520px; }
+        .lookup-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 1px solid var(--border); }
+        .lookup-input { flex: 1; background: var(--bg-card); border: 1px solid var(--border); border-bottom: 2px solid var(--amber); color: var(--text-primary); font-family: var(--font-display); font-size: 1em; letter-spacing: 0.1em; padding: 8px 12px; outline: none; text-transform: uppercase; }
       `}</style>
+    </div>
+  );
+}
+
+// ── Player Lookup component ────────────────────────────────────────────────
+const SERVER_URL_LOOKUP = "http://localhost:3001";
+
+function PlayerLookup({ online, myId, onAttack }) {
+  const [query,   setQuery]   = useState("");
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState(null);
+
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+    setLoading(true); setError(null); setProfile(null);
+    try {
+      // Search leaderboard for matching name
+      const res  = await fetch(`${SERVER_URL_LOOKUP}/api/leaderboard?limit=200`);
+      const data = await res.json();
+      const match = data.find(p => p.name?.toUpperCase() === query.trim().toUpperCase() || p.uid === query.trim());
+      if (!match) { setError(`No operative found: "${query}"`); }
+      else {
+        // Fetch full player record
+        const r2 = await fetch(`${SERVER_URL_LOOKUP}/api/players/${match.uid}`);
+        const full = await r2.json();
+        setProfile({ ...match, ...full });
+      }
+    } catch {
+      setError("Server offline — player lookup requires the game server.");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div className="lookup-card">
+        <div className="panel-header">Search Operative</div>
+        <p className="dim" style={{ fontSize: "0.85em" }}>
+          Look up any registered operative by name or ID. View their public profile and stats.
+        </p>
+        {!online && (
+          <div className="offline-notice">
+            <span className="mono muted" style={{ fontSize: "0.78em" }}>
+              Player lookup requires the game server. Run: <span className="amber">npm run server</span>
+            </span>
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            className="lookup-input"
+            placeholder="OPERATIVE NAME OR ID..."
+            value={query}
+            onChange={e => setQuery(e.target.value.toUpperCase())}
+            onKeyDown={e => e.key === "Enter" && handleSearch()}
+            disabled={!online}
+          />
+          <button className="btn btn-primary" onClick={handleSearch} disabled={!online || loading || !query.trim()}>
+            {loading ? "..." : "▶ Search"}
+          </button>
+        </div>
+        {error && <div className="mono" style={{ fontSize: "0.75em", color: "#c0392b" }}>✗ {error}</div>}
+      </div>
+
+      {profile && (
+        <div className="lookup-profile animate-in">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div className="mono amber" style={{ fontSize: "0.62em", letterSpacing: "0.2em", marginBottom: 3 }}>OPERATIVE DOSSIER</div>
+              <div style={{ fontFamily: "var(--font-display)", fontSize: "1.2em", letterSpacing: "0.15em", textTransform: "uppercase" }}>{profile.name}</div>
+              <div className="mono muted" style={{ fontSize: "0.68em", marginTop: 2 }}>ID: {profile.uid}</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div className="mono amber" style={{ fontSize: "0.85em" }}>Rank #{profile.rank || "—"}</div>
+              <div className="mono muted" style={{ fontSize: "0.65em", marginTop: 2 }}>
+                Last seen: {profile.lastSeen ? new Date(profile.lastSeen).toLocaleDateString() : "—"}
+              </div>
+            </div>
+          </div>
+
+          <hr className="dark" />
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+            {[
+              { label: "Level",         val: profile.level || 1,                                color: "var(--amber)" },
+              { label: "Reputation",    val: profile.reputation || 0,                            color: "var(--amber)" },
+              { label: "Total Earned",  val: `$${(profile.totalEarned||0).toLocaleString()}`,    color: "#3d8c5a" },
+              { label: "Crimes",        val: profile.crimesSucceeded || 0,                       color: "#3d8c5a" },
+              { label: "Faction",       val: profile.factionId || "Independent",                 color: "#a85fd4" },
+              { label: "Districts",     val: profile.ownedDistricts || 0,                        color: "#5a7ec8" },
+              { label: "Crew Size",     val: profile.crewCount || 0,                             color: "#d4a827" },
+              { label: "Heat",          val: `${profile.heat || 0}%`,                            color: "#c0392b" },
+            ].map(({ label, val, color }) => (
+              <div key={label} className="lookup-stat-row">
+                <span className="label" style={{ fontSize: "0.65em" }}>{label}</span>
+                <span className="mono" style={{ color, fontSize: "0.78em" }}>{val}</span>
+              </div>
+            ))}
+          </div>
+
+          {profile.uid !== myId && (
+            <>
+              <hr className="dark" />
+              <button
+                className="btn btn-danger"
+                style={{ width: "100%", padding: "10px", fontSize: "0.78em" }}
+                onClick={() => onAttack(profile)}
+              >
+                ⚔ Switch to Leaderboard — Raid {profile.name}
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

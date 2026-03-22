@@ -33,6 +33,8 @@ import { calcLevel, CRIME_XP, LEVEL_UNLOCKS } from "./data/levels";
 import { getAllDistrictsFull as getAllDistricts } from "./data/territories";
 import { getEncounterForCrime }    from "./data/encounters";
 import { snapshotPlayerState, isSameDay } from "./data/dailyChallenges";
+import { ACHIEVEMENTS }                   from "./data/achievements";
+import { migratePlayer }                  from "./data/saveMigration";
 
 const SAVE_KEY   = "shattered_player_v4";
 const SERVER_URL = "http://localhost:3001";
@@ -55,7 +57,11 @@ export default function App() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(SAVE_KEY);
-      if (saved) { setPlayer(JSON.parse(saved)); addLog("Session restored."); }
+      if (saved) {
+        const migrated = migratePlayer(JSON.parse(saved));
+        setPlayer(migrated);
+        addLog("Session restored.");
+      }
     } catch {}
   }, []);
   useEffect(() => {
@@ -64,6 +70,26 @@ export default function App() {
 
   // Game clock (energy regen, training timer, territory income)
   useGameClock(player, setPlayer);
+
+  // Achievement unlock detection — fires toast on new unlock
+  useEffect(() => {
+    if (!player) return;
+    const unlockedIds = (player.unlockedAchievements || []);
+    const nowUnlocked = ACHIEVEMENTS.filter(a => a.check(player)).map(a => a.id);
+    const newOnes = nowUnlocked.filter(id => !unlockedIds.includes(id));
+    if (newOnes.length > 0) {
+      newOnes.forEach(id => {
+        const ach = ACHIEVEMENTS.find(a => a.id === id);
+        if (ach) toast.show(`🏆 Achievement: ${ach.label}`, "income", 5000);
+      });
+      setPlayer(prev => prev ? { ...prev, unlockedAchievements: [...unlockedIds, ...newOnes] } : prev);
+    }
+  }, [
+    player?.crimesSucceeded, player?.heat, player?.totalEarned,
+    player?.factionId, player?.crew?.length, player?.ownedDistricts?.length,
+    player?.inventory?.length, player?.totalLaundered, player?.timesArrested,
+    player?.prisonDays, player?.tier5Attempts, player?.xp,
+  ]);
 
   // Server sync
   const syncToServer = useCallback((p) => {
@@ -208,8 +234,9 @@ export default function App() {
     setPlayer((prev) => {
       if (action.type==="activity_success") {
         const ns={...prev.stats}; ns[action.stat]=(ns[action.stat]||0)+action.gain;
-        addLog(`Prison: +${action.gain} ${action.stat}`);
-        return {...prev, energy:Math.max(0,(prev.energy||100)-action.energyCost), prisonDays:(prev.prisonDays||0)+(action.addDay?1:0), stats:ns};
+        const cashGain = action.cashEarned || 0;
+        addLog(`Prison: +${action.gain} ${action.stat}${cashGain ? ` +$${cashGain}` : ""}`);
+        return {...prev, energy:Math.max(0,(prev.energy||100)-action.energyCost), prisonDays:(prev.prisonDays||0)+(action.addDay?1:0), stats:ns, cash:(prev.cash||0)+cashGain};
       }
       if (action.type==="activity_fail") return {...prev, energy:Math.max(0,(prev.energy||100)-action.energyCost), prisonSentence:(prev.prisonSentence||0)+action.extraDays};
       if (action.type==="serve_time") {

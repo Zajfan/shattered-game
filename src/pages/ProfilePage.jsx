@@ -4,27 +4,7 @@ import { organizations }                  from "../data/organizations";
 import { CREW_ARCHETYPES }                from "../data/crew";
 import { getAllDistrictsFull as getAllDistricts } from "../data/territories";
 import { marketItems }                    from "../data/market";
-
-const ACHIEVEMENTS = [
-  { id: "first_blood",   label: "First Blood",     desc: "Complete your first crime.",           check: (p) => p.crimesSucceeded >= 1 },
-  { id: "hustle_hard",   label: "Hustle Hard",      desc: "Complete 25 crimes.",                  check: (p) => p.crimesSucceeded >= 25 },
-  { id: "ghost",         label: "Ghost",            desc: "Keep heat below 10% for a session.",   check: (p) => p.heat < 10 && p.crimesSucceeded >= 5 },
-  { id: "hot_hundred",   label: "Hot Hundred",      desc: "Reach 100% heat.",                     check: (p) => p.heat >= 100 },
-  { id: "kingpin",       label: "Kingpin",           desc: "Reach $1,000,000 total earned.",       check: (p) => p.totalEarned >= 1_000_000 },
-  { id: "street_rat",    label: "Street Rat",       desc: "Earn your first $10,000.",             check: (p) => p.totalEarned >= 10_000 },
-  { id: "made_man",      label: "Made Man",         desc: "Join a faction.",                      check: (p) => !!p.factionId },
-  { id: "el_jefe",       label: "El Jefe",          desc: "Join a Tier 5 organization.",          check: (p) => ["sinaloa","cjng","ndrangheta"].includes(p.factionId) },
-  { id: "the_crew",      label: "The Crew",         desc: "Hire your first crew member.",         check: (p) => (p.crew?.length || 0) >= 1 },
-  { id: "army",          label: "Army",             desc: "Have 5+ active crew members.",         check: (p) => (p.crew?.length || 0) >= 5 },
-  { id: "turf_war",      label: "Turf War",         desc: "Control your first district.",         check: (p) => (p.ownedDistricts?.length || 0) >= 1 },
-  { id: "empire",        label: "Empire",           desc: "Control 5+ districts.",                check: (p) => (p.ownedDistricts?.length || 0) >= 5 },
-  { id: "arms_dealer",   label: "Arms Dealer",      desc: "Own a weapon from the black market.",  check: (p) => (p.inventory || []).some((i) => ["ghost_pistol","sawed_off","ar_pistol","knife"].includes(i.id)) },
-  { id: "laundromat",    label: "Laundromat",       desc: "Launder $100,000+.",                   check: (p) => (p.totalLaundered || 0) >= 100_000 },
-  { id: "teflon",        label: "Teflon",           desc: "Commit 10 crimes without arrest.",     check: (p) => p.crimesSucceeded >= 10 && p.timesArrested === 0 },
-  { id: "conviction",    label: "Conviction",       desc: "Get arrested 3 times.",                check: (p) => p.timesArrested >= 3 },
-  { id: "jailbird",      label: "Jailbird",         desc: "Serve 30 prison days.",                check: (p) => (p.prisonDays || 0) >= 30 },
-  { id: "tier5_crime",   label: "The Apex",         desc: "Attempt a Tier 5 crime.",              check: (p) => (p.tier5Attempts || 0) >= 1 },
-];
+import { ACHIEVEMENTS }                   from "../data/achievements";
 
 function StatBar({ statKey, value }) {
   const def = STAT_DEFINITIONS[statKey];
