@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { getMissionsForFaction } from "../data/factionMissions";
 import { getDailyChallenges, isSameDay } from "../data/dailyChallenges";
 import { secondsRemaining } from "../hooks/useGameClock";
+import { STORY_QUESTS, SIDE_QUESTS, getQuestStatus, QUEST_STATUS } from "../data/quests";
 
 const NAV_ITEMS = [
   { id:"dashboard",   icon:"▣", label:"Dashboard"   },
@@ -28,17 +29,16 @@ function useBadges(player) {
     const badges = {};
     if (!player) return badges;
 
-    // Claimable quests (story + side)
+    // Claimable quests (story + side) — using proper ES imports
     const questClaimable = (() => {
       let n = 0;
       try {
-        const { STORY_CHAPTERS, SIDE_QUEST_CHAINS, getQuestStatus, QUEST_STATUS } = require("../data/quests");
-        STORY_CHAPTERS.forEach(ch => ch.missions.forEach(m => {
-          if (getQuestStatus(m.id, player) === QUEST_STATUS.CLAIMABLE) n++;
-        }));
-        SIDE_QUEST_CHAINS.forEach(chain => chain.quests.forEach(q => {
-          if (getQuestStatus(q.id, player) === QUEST_STATUS.CLAIMABLE) n++;
-        }));
+        STORY_QUESTS.forEach(q => {
+          if (getQuestStatus(q, player) === QUEST_STATUS.CLAIMABLE) n++;
+        });
+        SIDE_QUESTS.forEach(q => {
+          if (getQuestStatus(q, player) === QUEST_STATUS.CLAIMABLE) n++;
+        });
       } catch {}
       return n;
     })();
