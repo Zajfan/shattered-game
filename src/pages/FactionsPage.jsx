@@ -67,8 +67,11 @@ export default function FactionsPage({ player, onJoinFaction }) {
                 </div>
                 <div className="org-name">{org.name}</div>
                 <div className="mono muted" style={{ fontSize: "0.7em" }}>{org.origin} · Est. {org.founded}</div>
-                <div className="mono muted" style={{ fontSize: "0.7em" }}>
-                  {eligible ? "✓ Eligible to join" : "⚠ Requirements not met"}
+                <div className="mono" style={{ fontSize: "0.7em", color: eligible ? "#3d8c5a" : "#c0392b" }}>
+                  {eligible ? "✓ Eligible to join"
+                    : playerLevel < (org.levelReq || 1)
+                    ? `⚠ Requires Level ${org.levelReq || 1} (you: ${playerLevel})`
+                    : "⚠ Stat requirements not met"}
                 </div>
               </div>
             );
@@ -119,6 +122,14 @@ export default function FactionsPage({ player, onJoinFaction }) {
               <hr className="dark" />
 
               <div className="label" style={{ marginBottom: 6 }}>Requirements to Join</div>
+              {(selected.levelReq || 1) > 1 && (
+                <div className="detail-row">
+                  <span className="mono muted" style={{ fontSize: "0.75em" }}>Level</span>
+                  <span className="mono" style={{ fontSize: "0.75em", color: playerLevel >= (selected.levelReq || 1) ? "#3d8c5a" : "#c0392b" }}>
+                    {playerLevel} / {selected.levelReq} {playerLevel >= (selected.levelReq || 1) ? "✓" : "✗"}
+                  </span>
+                </div>
+              )}
               {Object.entries(selected.joinRequirements || {}).map(([stat, val]) => {
                 const has = (player.stats[stat] || 0) >= val;
                 return (

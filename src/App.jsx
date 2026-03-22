@@ -51,7 +51,10 @@ export default function App() {
   const [levelUpModal,   setLevelUpModal]   = useState(null);
   const [serverOnline,   setServerOnline]   = useState(false);
 
-  const addLog = (msg) => setLog((prev) => [`▸ ${msg}`, ...prev].slice(0, 50));
+  const addLog = (msg) => {
+    const t = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    setLog((prev) => [`[${t}] ${msg}`, ...prev].slice(0, 50));
+  };
 
   // Load / save
   useEffect(() => {

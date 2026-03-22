@@ -209,11 +209,17 @@ export default function RightPanel({ player, log, onNavigate }) {
       {tab === "log" && (
         <div className="rp-log">
           {log.length === 0 && <div className="mono muted" style={{ fontSize: "0.7em", opacity: 0.5, padding: "8px 0" }}>▸ Awaiting activity...</div>}
-          {log.map((e, i) => (
-            <div key={i} className="rp-log-entry" style={{ opacity: i === 0 ? 1 : Math.max(0.25, 1 - i * 0.05) }}>
-              {e}
-            </div>
-          ))}
+        {log.map((e, i) => {
+            const match = e.match(/^\[(\d{2}:\d{2})\] (.*)/);
+            const time  = match ? match[1] : null;
+            const text  = match ? match[2] : e;
+            return (
+              <div key={i} className="rp-log-entry" style={{ opacity: i === 0 ? 1 : Math.max(0.25, 1 - i * 0.05) }}>
+                {time && <span style={{ color: "var(--text-muted)", marginRight: 6, flexShrink: 0 }}>{time}</span>}
+                <span>{text}</span>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -239,7 +245,7 @@ export default function RightPanel({ player, log, onNavigate }) {
         .rp-quickbtn { background: var(--bg-raised); border: 1px solid var(--border); border-top: 2px solid; font-family: var(--font-mono); font-size: 0.62em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 6px 4px; cursor: pointer; transition: all 0.1s; }
         .rp-quickbtn:hover { background: var(--bg-card); color: var(--text-secondary); }
         .rp-log { flex: 1; overflow-y: auto; padding: 6px 0; display: flex; flex-direction: column; gap: 2px; }
-        .rp-log-entry { font-family: var(--font-mono); font-size: 0.65em; color: var(--text-muted); line-height: 1.9; border-bottom: 1px solid var(--border); padding: 1px 0; }
+        .rp-log-entry { font-family: var(--font-mono); font-size: 0.65em; color: var(--text-muted); line-height: 1.9; border-bottom: 1px solid var(--border); padding: 1px 0; display: flex; align-items: baseline; gap: 0; }
       `}</style>
     </div>
   );

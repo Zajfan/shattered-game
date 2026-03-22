@@ -60,6 +60,7 @@ export default function Dashboard({ player, onNavigate }) {
   const ownedDists   = (player.ownedDistricts||[]).map((id)=>allDistricts.find((d)=>d.id===id)).filter(Boolean);
   const weeklyIncome = ownedDists.reduce((s,d)=>s+d.passiveIncome,0);
   const crewPayroll  = (player.crew||[]).reduce((s,m)=>s+m.weeklyCost,0);
+  const netWorth     = Math.floor((player.cash||0) + (player.dirtyCash||0)*0.7 + weeklyIncome*52);
   const faction      = organizations.find((o)=>o.id===player.factionId);
   const factionRank  = faction ? getRankForMissions((player.completedMissions||[]).length) : null;
   const objectives   = getDailyObjectives(player);
@@ -110,6 +111,7 @@ export default function Dashboard({ player, onNavigate }) {
             {[
               {label:"Clean Cash",  val:`$${(player.cash||0).toLocaleString()}`,      color:"#3d8c5a"},
               {label:"Dirty Cash",  val:`$${(player.dirtyCash||0).toLocaleString()}`, color:"#8c7a3d"},
+              {label:"Net Worth",   val:`$${netWorth.toLocaleString()}`,              color:"var(--amber)"},
               {label:"Territory",   val:weeklyIncome>0?`$${weeklyIncome.toLocaleString()}/wk`:"None", color:"#5a7ec8"},
               {label:"Crew Payroll",val:crewPayroll>0?`-$${crewPayroll.toLocaleString()}/wk`:"—", color:crewPayroll>0?"#c0392b":"var(--text-muted)"},
             ].map(({label,val,color})=>(
@@ -264,7 +266,7 @@ export default function Dashboard({ player, onNavigate }) {
         .dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
         .dash-col{display:flex;flex-direction:column;gap:8px;}
         .dash-section-label{font-family:var(--font-mono);font-size:0.6em;text-transform:uppercase;letter-spacing:.2em;color:var(--amber-dim);border-bottom:1px solid var(--border);padding-bottom:4px;}
-        .resources-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+        .resources-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;}
         .resource-tile{background:var(--bg-card);border:1px solid var(--border);padding:7px 9px;display:flex;flex-direction:column;gap:2px;}
         .energy-card{background:var(--bg-card);border:1px solid var(--border);padding:9px 11px;}
         .active-timers-card{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--amber);padding:9px 12px;display:flex;flex-direction:column;gap:8px;}
