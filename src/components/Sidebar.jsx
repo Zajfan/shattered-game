@@ -5,6 +5,7 @@ import { secondsRemaining } from "../hooks/useGameClock";
 
 const NAV_ITEMS = [
   { id:"dashboard",   icon:"▣", label:"Dashboard"   },
+  { id:"quests",      icon:"📜", label:"Quests"      },
   { id:"crimes",      icon:"🗂", label:"Crimes"      },
   { id:"training",    icon:"💪", label:"Training"    },
   { id:"factions",    icon:"⚡", label:"Factions"    },
@@ -27,7 +28,21 @@ function useBadges(player) {
     const badges = {};
     if (!player) return badges;
 
-    // Claimable faction missions
+    // Claimable quests (story + side)
+    const questClaimable = (() => {
+      let n = 0;
+      try {
+        const { STORY_CHAPTERS, SIDE_QUEST_CHAINS, getQuestStatus, QUEST_STATUS } = require("../data/quests");
+        STORY_CHAPTERS.forEach(ch => ch.missions.forEach(m => {
+          if (getQuestStatus(m.id, player) === QUEST_STATUS.CLAIMABLE) n++;
+        }));
+        SIDE_QUEST_CHAINS.forEach(chain => chain.quests.forEach(q => {
+          if (getQuestStatus(q.id, player) === QUEST_STATUS.CLAIMABLE) n++;
+        }));
+      } catch {}
+      return n;
+    })();
+    if (questClaimable > 0) badges["quests"] = questClaimable;
     if (player.factionId) {
       const missions  = getMissionsForFaction(player.factionId);
       const completed = player.completedMissions || [];

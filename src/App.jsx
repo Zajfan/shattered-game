@@ -20,6 +20,7 @@ import CharacterCreation   from "./pages/CharacterCreation";
 import DailyChallengesPage from "./pages/DailyChallengesPage";
 import DarkWebPage         from "./pages/DarkWebPage";
 import SettingsPage        from "./pages/SettingsPage";
+import QuestsPage          from "./pages/QuestsPage";
 import StatisticsPage      from "./pages/StatisticsPage";
 import TutorialOverlay     from "./components/TutorialOverlay";
 import Toasts              from "./components/Toasts";
@@ -148,7 +149,10 @@ export default function App() {
       completedMissions: [], trainingLog: [],
       activeTraining: null, activeCrimeTimer: null,
       lastEnergyRegen: Date.now(), lastTerritoryTick: Date.now(), lastHeatDecay: Date.now(),
-      claimedChallenges: [], usedContactJobs: {}, contactTrust: {},
+      completedQuests: [], activeQuests: [], completedContracts: [],
+      activeContracts: [], contractSnapshots: {}, wonSprints: [],
+      titles: ["nobody"], activeTitle: "nobody",
+      unlockedContacts: [], permanentBonuses: {},
       unlockedAchievements: [], eventsResolved: 0, encountersEscaped: 0,
       isInCustody: false, health: 100, lastHealthRegen: Date.now(),
       weeklyTerritoryIncome: 0, _lastCrimeEarning: 0,
@@ -323,6 +327,96 @@ export default function App() {
     });
   };
 
+  const handleQuestAccept = (questOrId) => {
+    setPlayer((prev) => {
+      if (!prev) return prev;
+      const quest = typeof questOrId === "string" ? { id: questOrId } : questOrId;
+      const id    = quest.id;
+      const isContract = id?.startsWith("contract:");
+      const cleanId = isContract ? id.replace("contract:", "") : id;
+      if (isContract) {
+        if ((prev.activeContracts||[]).includes(cleanId)) return prev;
+        const snap = {
+          crimesSucceeded: prev.crimesSucceeded || 0,
+          totalEarned:     prev.totalEarned     || 0,
+          totalLaundered:  prev.totalLaundered  || 0,
+          ownedDistricts:  prev.ownedDistricts?.length || 0,
+        };
+        addLog(`Contract accepted: ${cleanId}`);
+        return {
+          ...prev,
+          activeContracts:    [...(prev.activeContracts||[]), cleanId],
+          contractSnapshots:  { ...(prev.contractSnapshots||{}), [cleanId]: snap },
+        };
+      }
+      if ((prev.activeQuests||[]).includes(id) || (prev.completedQuests||[]).includes(id)) return prev;
+      addLog(`Quest accepted: ${quest.title || id}`);
+      toast.show(`Mission accepted: ${quest.title || id}`, "info");
+      return { ...prev, activeQuests: [...(prev.activeQuests||[]), id] };
+    });
+  };
+
+  const handleQuestClaim = (quest, chapter) => {
+    setPlayer((prev) => {
+      if (!prev) return prev;
+      const isContract = quest.type === "contract";
+      let next = { ...prev };
+
+      // Apply cash + XP
+      if (quest.rewards?.cash) next.cash = (next.cash || 0) + quest.rewards.cash;
+      if (quest.rewards?.xp)   { const xpR = awardXP(quest.rewards.xp, next); next = { ...next, ...xpR }; checkLevelUp(prev, { ...next }); }
+
+      // Stat bonuses
+      if (quest.rewards?.statBonus) {
+        const ns = { ...next.stats };
+        Object.entries(quest.rewards.statBonus).forEach(([s, v]) => { ns[s] = (ns[s]||0) + v; });
+        next.stats = ns;
+      }
+
+      // Title unlock (supports both .title and legacy .titleUnlock)
+      const titleToUnlock = quest.rewards?.title || quest.rewards?.titleUnlock;
+      if (titleToUnlock) {
+        next.titles = [...new Set([...(next.titles||[]), titleToUnlock])];
+        next.activeTitle = titleToUnlock;
+        toast.show(`🏷 Title unlocked: "${titleToUnlock}"`, "income", 5000);
+      }
+
+      // Exclusive item unlock (supports both .exclusiveItem and legacy .itemUnlock)
+      const itemToUnlock = quest.rewards?.exclusiveItem || quest.rewards?.itemUnlock;
+      if (itemToUnlock) {
+        const itemName = itemToUnlock.replace(/_/g," ");
+        next.inventory = [...(next.inventory||[]), { id: itemToUnlock, name: itemName, questOnly: true }];
+        toast.show(`★ Exclusive item: ${itemName}`, "income", 5000);
+      }
+
+      // NPC contact unlock (supports both .contact and legacy .contactUnlock)
+      const contactToUnlock = quest.rewards?.contact || quest.rewards?.contactUnlock;
+      if (contactToUnlock) {
+        next.unlockedContacts = [...new Set([...(next.unlockedContacts||[]), contactToUnlock])];
+        toast.show(`🔑 New contact unlocked`, "income", 5000);
+      }
+
+      // Permanent bonus
+      if (quest.rewards?.permanentBonus) {
+        next.permanentBonuses = { ...(next.permanentBonuses||{}), ...quest.rewards.permanentBonus };
+      }
+
+      // Mark complete
+      if (isContract) {
+        next.activeContracts    = (next.activeContracts||[]).filter(id => id !== quest.id);
+        next.completedContracts = [...(next.completedContracts||[]), quest.id];
+      } else {
+        next.activeQuests    = (next.activeQuests||[]).filter(id => id !== quest.id);
+        next.completedQuests = [...(next.completedQuests||[]), quest.id];
+      }
+
+      const label = quest.title || quest.id;
+      addLog(`Quest complete: ${label} +$${(quest.rewards?.cash||0).toLocaleString()}`);
+      toast.success(`Quest complete: ${label}`);
+      return next;
+    });
+  };
+
   const handleEncounterResolve = (encounter, route, resolution) => {
     setPlayer((prev) => {
       if (!resolution.success) return prev;
@@ -439,6 +533,7 @@ export default function App() {
 
   const renderPage = () => {
     switch (page) {
+      case "quests":      return <QuestsPage        player={player} onQuestAccept={handleQuestAccept} onQuestClaim={handleQuestClaim} worldEvent={null} />;
       case "statistics":  return <StatisticsPage    player={player}/>;
       case "settings":    return <SettingsPage      player={player} onReset={handleReset} onHeal={handleHeal} onRestoreEnergy={handleRestoreEnergy}/>;      case "news":        return <NewsFeedPage       player={player}/>;
       case "challenges":  return <DailyChallengesPage player={player} onClaimChallenge={handleClaimChallenge}/>;

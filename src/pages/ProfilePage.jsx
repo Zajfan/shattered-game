@@ -5,6 +5,7 @@ import { CREW_ARCHETYPES }                from "../data/crew";
 import { getAllDistrictsFull as getAllDistricts } from "../data/territories";
 import { marketItems }                    from "../data/market";
 import { ACHIEVEMENTS }                   from "../data/achievements";
+import { TITLES }                          from "../data/questRewards";
 
 function StatBar({ statKey, value }) {
   const def = STAT_DEFINITIONS[statKey];
@@ -61,6 +62,35 @@ export default function ProfilePage({ player }) {
           <div className="mono muted" style={{ fontSize: "0.7em", marginTop: 4 }}>
             ID: {player.id} &nbsp;·&nbsp; Created: {createdDate} &nbsp;·&nbsp; Level {player.level}
           </div>
+          {/* Active title */}
+          {player.activeTitle && TITLES[player.activeTitle] && (
+            <div style={{ marginTop: 6 }}>
+              <span className="mono" style={{
+                fontSize: "0.68em", padding: "2px 10px",
+                border: `1px solid ${TITLES[player.activeTitle].color}`,
+                color: TITLES[player.activeTitle].color,
+                background: `${TITLES[player.activeTitle].color}15`,
+                letterSpacing: "0.1em", textTransform: "uppercase",
+              }}>
+                🏷 {TITLES[player.activeTitle].label}
+              </span>
+            </div>
+          )}
+          {/* All earned titles */}
+          {(player.titles || []).length > 1 && (
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
+              {(player.titles || []).map(tid => {
+                const t = TITLES[tid];
+                if (!t || tid === player.activeTitle) return null;
+                return (
+                  <span key={tid} className="mono muted" style={{
+                    fontSize: "0.6em", padding: "1px 7px",
+                    border: "1px solid var(--border)",
+                  }}>{t.label}</span>
+                );
+              })}
+            </div>
+          )}
         </div>
         <div className="profile-id-right">
           <div className="profile-avatar">{player.name?.[0] || "?"}</div>
