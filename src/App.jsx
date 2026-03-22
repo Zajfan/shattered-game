@@ -25,6 +25,7 @@ import TutorialOverlay     from "./components/TutorialOverlay";
 import Toasts              from "./components/Toasts";
 import { toast }           from "./components/Toasts";
 import EncounterModal      from "./components/EncounterModal";
+import WantedBanner        from "./components/WantedBanner";
 import RightPanel          from "./components/RightPanel";
 
 import { useGameClock }            from "./hooks/useGameClock";
@@ -148,10 +149,12 @@ export default function App() {
       activeTraining: null, activeCrimeTimer: null,
       lastEnergyRegen: Date.now(), lastTerritoryTick: Date.now(), lastHeatDecay: Date.now(),
       claimedChallenges: [], usedContactJobs: {}, contactTrust: {},
+      unlockedAchievements: [], eventsResolved: 0, encountersEscaped: 0,
+      isInCustody: false, health: 100, lastHealthRegen: Date.now(),
+      weeklyTerritoryIncome: 0, _lastCrimeEarning: 0,
       dailySnapshot: snapshotPlayerState({ ...newPlayer, completedMissions: [], trainingLog: [] }),
     };
     setPlayer(p); setPage("dashboard"); addLog(`New operative: ${p.name}`);
-    setShowTutorial(true);
     setShowTutorial(true);
     setTimeout(() => syncToServer(p), 500);
   };
@@ -194,6 +197,7 @@ export default function App() {
         isInCustody:     autoArrest ? true : (prev.isInCustody || false),
         totalEarned:     outcome.success ? prev.totalEarned+(outcome.cashGain||0) : prev.totalEarned,
         tier5Attempts:   outcome.crime.tier===5 ? (prev.tier5Attempts||0)+1 : (prev.tier5Attempts||0),
+        _lastCrimeEarning: outcome.cashGain || 0,
         activeCrimeTimer: outcome.cooldown ? { crimeId: outcome.crime.id, startedAt: Date.now(), durationMs: outcome.cooldown } : prev.activeCrimeTimer,
         stats: {...prev.stats, reputation: outcome.success ? Math.min(100,(prev.stats.reputation||0)+Math.floor(outcome.crime.tier*0.5)) : prev.stats.reputation},
       };
@@ -465,6 +469,7 @@ export default function App() {
         <RightPanel player={player} log={log} onNavigate={setPage} />
       </aside>
 
+      <WantedBanner player={player} />
       {showTutorial && (
         <TutorialOverlay onDismiss={() => setShowTutorial(false)} onNavigate={(p) => { setPage(p); setShowTutorial(false); }}/>
       )}

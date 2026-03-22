@@ -38,8 +38,9 @@ export default function TerritoryPage({ player, onClaimDistrict }) {
       setFeedback({ type: "error", msg: `Need Level ${district.requiredLevel} to operate here.` });
       return;
     }
-    // Claim cost: 3x weekly income
-    const claimCost = district.passiveIncome * 3;
+    // Claim cost: 3x weekly income — 25% discount in home city
+    const isHomeCityDistrict = district.cityId === (player?.startingCity);
+    const claimCost = Math.floor(district.passiveIncome * 3 * (isHomeCityDistrict ? 0.75 : 1));
     if ((player?.cash || 0) < claimCost) {
       setFeedback({ type: "error", msg: `Need $${claimCost.toLocaleString()} to establish operations.` });
       return;
@@ -48,7 +49,13 @@ export default function TerritoryPage({ player, onClaimDistrict }) {
     setFeedback({ type: "success", msg: `Now controlling ${district.name}. Passive income: $${district.passiveIncome.toLocaleString()}/wk` });
   };
 
-  const totalWeeklyIncome = ownedIds.reduce((sum, id) => {
+
+  const getClaimCost = (district) => {
+    const isHome = district.cityId === (player?.startingCity) || district.id?.startsWith(player?.startingCity || "NONE");
+    return Math.floor(district.passiveIncome * 3 * (isHome ? 0.75 : 1));
+  };
+
+    const totalWeeklyIncome = ownedIds.reduce((sum, id) => {
     const d = getAllDistrictsFull().find((d) => d.id === id);
     return sum + (d?.passiveIncome || 0);
   }, 0);
@@ -188,7 +195,10 @@ export default function TerritoryPage({ player, onClaimDistrict }) {
                   {!isOwned && (
                     <div className="district-req mono muted" style={{ fontSize: "0.65em" }}>
                       Req: Rep {district.requiredRep} · Lv {district.requiredLevel}
-                      · ${(district.passiveIncome * 3).toLocaleString()} to establish
+                      {district.cityId === player?.startingCity && (
+                        <span style={{ color: "#3d8c5a", marginLeft: 6 }}>· 🏠 Home -25%</span>
+                      )}
+                      · ${(getClaimCost(district)).toLocaleString()} to establish
                     </div>
                   )}
                 </div>
@@ -221,8 +231,11 @@ export default function TerritoryPage({ player, onClaimDistrict }) {
                 <span className="mono muted" style={{ fontSize: "0.8em" }}>{selectedDistrict.incomeType}</span>
               </div>
               <div className="detail-row">
-                <span className="label">Establish Cost</span>
-                <span className="mono amber">${(selectedDistrict.passiveIncome * 3).toLocaleString()}</span>
+                <span className="label">Establish Cost
+                  {selectedDistrict.cityId === player?.startingCity &&
+                    <span className="mono" style={{ color: "#3d8c5a", marginLeft: 6, fontSize: "0.85em" }}>🏠 -25%</span>}
+                </span>
+                <span className="mono amber">${getClaimCost(selectedDistrict).toLocaleString()}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Heat Modifier</span>
@@ -237,7 +250,7 @@ export default function TerritoryPage({ player, onClaimDistrict }) {
               {[
                 { key: "Reputation", need: selectedDistrict.requiredRep, have: player?.stats?.reputation || 0 },
                 { key: "Level",      need: selectedDistrict.requiredLevel, have: player?.level || 1 },
-                { key: "Cash",       need: selectedDistrict.passiveIncome * 3, have: player?.cash || 0, isCash: true },
+                { key: "Cash",       need: getClaimCost(selectedDistrict), have: player?.cash || 0, isCash: true },
               ].map(({ key, need, have, isCash }) => {
                 const met = have >= need;
                 return (
@@ -279,7 +292,7 @@ export default function TerritoryPage({ player, onClaimDistrict }) {
                   style={{ width: "100%", padding: "12px", marginTop: 4 }}
                   onClick={() => handleClaim(selectedDistrict)}
                 >
-                  ▶ Claim — ${(selectedDistrict.passiveIncome * 3).toLocaleString()}
+                  ▶ Claim — ${getClaimCost(selectedDistrict).toLocaleString()}
                 </button>
               )}
             </div>
