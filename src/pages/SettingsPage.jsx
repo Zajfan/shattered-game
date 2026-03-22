@@ -5,6 +5,8 @@ import { calcLevel } from "../data/levels";
 export default function SettingsPage({ player, onReset, onHeal, onRestoreEnergy }) {
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmName,  setConfirmName]  = useState("");
+  const [apiKey,       setApiKey]       = useState(() => localStorage.getItem("shattered_api_key") || "");
+  const [apiKeySaved,  setApiKeySaved]  = useState(false);
 
   const level   = calcLevel(player?.xp || 0);
   const health  = player?.health  || 100;
@@ -138,6 +140,54 @@ export default function SettingsPage({ player, onReset, onHeal, onRestoreEnergy 
               <div className="mono" style={{ fontSize: "0.72em", color: "#3d8c5a" }}>✓ Fully restored</div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* ── AI Intel (API Key) ── */}
+      <div className="settings-section">
+        <div className="settings-section-label">AI Intel — Anthropic API Key</div>
+        <div className="save-info-card">
+          <div className="mono muted" style={{ fontSize: "0.75em", lineHeight: 1.8, marginBottom: 12 }}>
+            Required for live field intel on quest missions and AI-driven events.{" "}
+            Your key is stored locally in your browser and never sent anywhere except directly to Anthropic.
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={e => { setApiKey(e.target.value); setApiKeySaved(false); }}
+              placeholder="sk-ant-..."
+              style={{
+                flex: 1, background: "var(--bg-raised)", border: "1px solid var(--border)",
+                color: "var(--text-primary)", fontFamily: "var(--font-mono)", fontSize: "0.78em",
+                padding: "8px 12px", borderRadius: 2, outline: "none",
+              }}
+            />
+            <button
+              className="btn-primary"
+              style={{ fontSize: "0.72em", padding: "8px 16px", flexShrink: 0 }}
+              onClick={() => {
+                if (apiKey.trim()) {
+                  localStorage.setItem("shattered_api_key", apiKey.trim());
+                } else {
+                  localStorage.removeItem("shattered_api_key");
+                }
+                setApiKeySaved(true);
+              }}
+            >
+              {apiKeySaved ? "✓ Saved" : "Save Key"}
+            </button>
+          </div>
+          {apiKey && (
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.65em", color: "#3d8c5a", marginTop: 8 }}>
+              ● Key set — AI intel will load on quest missions
+            </div>
+          )}
+          {!apiKey && (
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.65em", color: "var(--text-muted)", marginTop: 8 }}>
+              ○ No key — quest intel feed will show PENDING
+            </div>
+          )}
         </div>
       </div>
 
