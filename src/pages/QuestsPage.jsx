@@ -6,6 +6,7 @@ import {
   WORLD_EVENT_TYPES, EXCLUSIVE_ITEMS,
   QUEST_STATUS, getQuestStatus,
   getSideQuestsBySeries,
+  SPRINT_POOL, getSprintStatus, formatTimeLeft,
 } from "../data/quests";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -365,8 +366,152 @@ function WorldEventsTab({ worldEvent }) {
   );
 }
 
+// ── Sprint Card ───────────────────────────────────────────────────────────────
+function SprintCard({ sprint, player, status, onAccept, onClaim, onAbandon }) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (status !== QUEST_STATUS.ACTIVE) return;
+    const id = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(id);
+  }, [status]);
+
+  const activeSprint = player.activeSprint;
+  const isThisActive = activeSprint?.sprintId === sprint.id;
+  const snap = player.sprintSnapshot || {};
+  const objDone = sprint.objective.check(player, snap);
+  const rewards = [];
+  if (sprint.rewards.cash)      rewards.push(`$${sprint.rewards.cash.toLocaleString()}`);
+  if (sprint.rewards.xp)        rewards.push(`${sprint.rewards.xp} XP`);
+  if (sprint.rewards.title)     rewards.push(`🏷 "${sprint.rewards.title}"`);
+  if (sprint.rewards.statBonus) {
+    Object.entries(sprint.rewards.statBonus).forEach(([k,v]) => rewards.push(`+${v} ${k}`));
+  }
+
+  const statusColors = {
+    [QUEST_STATUS.AVAILABLE]: "var(--amber-dim)",
+    [QUEST_STATUS.ACTIVE]:    "#5a7ec8",
+    [QUEST_STATUS.CLAIMABLE]: "var(--green)",
+    [QUEST_STATUS.COMPLETE]:  "var(--text-muted)",
+    [QUEST_STATUS.EXPIRED]:   "var(--red)",
+    [QUEST_STATUS.LOCKED]:    "#2a2a2a",
+  };
+
+  return (
+    <div style={{
+      background: "var(--bg-card)",
+      border: `1px solid ${status === QUEST_STATUS.ACTIVE ? "#5a7ec8" : status === QUEST_STATUS.CLAIMABLE ? "var(--green)" : "var(--border)"}`,
+      borderRadius: 2, padding: 20,
+      opacity: [QUEST_STATUS.COMPLETE, QUEST_STATUS.LOCKED].includes(status) ? 0.55 : 1,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <span style={{ fontSize: 28, lineHeight: 1 }}>{sprint.icon}</span>
+          <div>
+            <div style={{ fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 600, color: "var(--amber)", letterSpacing: "0.04em" }}>
+              {sprint.title}
+            </div>
+            <div style={{ fontFamily: "var(--font-body)", fontSize: 12, fontStyle: "italic", color: "var(--text-secondary)", marginTop: 2 }}>
+              {sprint.subtitle}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: statusColors[status] || "var(--text-muted)", border: `1px solid ${statusColors[status] || "#2a2a2a"}`, padding: "2px 6px", borderRadius: 2, letterSpacing: "0.1em" }}>
+            {status.toUpperCase()}
+          </span>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: difficultyColor(sprint.difficulty) }}>
+            {difficultyLabel(sprint.difficulty)} · {sprint.durationHours}H
+          </span>
+        </div>
+      </div>
+
+      <div style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.55, marginBottom: 12 }}>
+        {sprint.desc}
+      </div>
+
+      {/* Objective */}
+      <div style={{ background: "var(--bg-raised)", borderRadius: 2, padding: "10px 12px", marginBottom: 12 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <span style={{ color: objDone && isThisActive ? "var(--green)" : "var(--text-muted)", fontSize: 14, flexShrink: 0 }}>
+            {objDone && isThisActive ? "✓" : "○"}
+          </span>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--text-primary)" }}>
+            {sprint.objective.label}
+          </span>
+        </div>
+      </div>
+
+      {/* Timer if active */}
+      {isThisActive && status === QUEST_STATUS.ACTIVE && (
+        <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "#5a7ec8", marginBottom: 12, letterSpacing: "0.08em" }}>
+          ⏱ {formatTimeLeft(activeSprint.startedAt, sprint.durationHours)}
+        </div>
+      )}
+      {status === QUEST_STATUS.EXPIRED && (
+        <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--red)", marginBottom: 12, letterSpacing: "0.08em" }}>
+          ✗ TIME EXPIRED
+        </div>
+      )}
+
+      {/* Rewards */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+        {rewards.map((r, i) => (
+          <span key={i} style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--amber)", background: "var(--bg-raised)", border: "1px solid var(--border)", borderRadius: 2, padding: "2px 8px" }}>{r}</span>
+        ))}
+      </div>
+
+      {/* Real note */}
+      {sprint.realNote && (
+        <div style={{ fontFamily: "var(--font-body)", fontSize: 11, fontStyle: "italic", color: "var(--text-muted)", lineHeight: 1.5, borderLeft: "2px solid var(--border)", paddingLeft: 10, marginBottom: 14 }}>
+          {sprint.realNote}
+        </div>
+      )}
+
+      {/* Action */}
+      {status === QUEST_STATUS.AVAILABLE && (
+        <button className="btn-primary" style={{ width: "100%" }} onClick={() => onAccept(sprint)}>
+          START SPRINT — {sprint.durationHours}H CLOCK
+        </button>
+      )}
+      {status === QUEST_STATUS.ACTIVE && !objDone && (
+        <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ flex: 1, background: "var(--bg-raised)", border: "1px solid #5a7ec8", borderRadius: 2, padding: "10px 0", textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "#5a7ec8", letterSpacing: "0.08em" }}>
+            SPRINT IN PROGRESS
+          </div>
+          <button onClick={() => onAbandon(sprint)} style={{ background: "transparent", border: "1px solid #c0392b", color: "#c0392b", borderRadius: 2, padding: "0 14px", fontFamily: "var(--font-mono)", fontSize: 11, cursor: "pointer", letterSpacing: "0.08em" }}>
+            ABANDON
+          </button>
+        </div>
+      )}
+      {status === QUEST_STATUS.CLAIMABLE && (
+        <button className="btn-primary" style={{ width: "100%", background: "var(--green)" }} onClick={() => onClaim(sprint)}>
+          ✓ CLAIM SPRINT REWARDS
+        </button>
+      )}
+      {status === QUEST_STATUS.EXPIRED && (
+        <button onClick={() => onAbandon(sprint)} style={{ width: "100%", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 2, padding: "10px 0", fontFamily: "var(--font-mono)", fontSize: 12, cursor: "pointer", letterSpacing: "0.08em" }}>
+          CLEAR EXPIRED SPRINT
+        </button>
+      )}
+      {status === QUEST_STATUS.COMPLETE && (
+        <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)", padding: "8px 0", letterSpacing: "0.08em" }}>✓ SPRINT COMPLETE</div>
+      )}
+      {status === QUEST_STATUS.LOCKED && !player.activeSprint && (
+        <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)", padding: "8px 0" }}>
+          🔒 REQUIRES LEVEL {sprint.levelReq}
+        </div>
+      )}
+      {status === QUEST_STATUS.LOCKED && player.activeSprint && (
+        <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)", padding: "8px 0" }}>
+          SPRINT ALREADY ACTIVE
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main QuestsPage ───────────────────────────────────────────────────────────
-export default function QuestsPage({ player, onQuestAccept, onQuestClaim, worldEvent }) {
+export default function QuestsPage({ player, onQuestAccept, onQuestClaim, onSprintAccept, onSprintClaim, onSprintAbandon, worldEvent }) {
   const [tab, setTab]                   = useState("story");
   const [selectedQuest, setSelectedQuest] = useState(null);
   const [aiNarrations, setAiNarrations] = useState({});
@@ -382,6 +527,13 @@ export default function QuestsPage({ player, onQuestAccept, onQuestClaim, worldE
   const completedQuests = player.completedQuests || [];
   const questProgress   = player.questProgress   || {};
   const weeklyContracts = getWeeklyContracts();
+
+  // Sprints
+  const sprintsWon    = player.wonSprints || [];
+  const activeSprint  = player.activeSprint;
+  const sprintsAvailable = SPRINT_POOL.filter(s => getSprintStatus(s, player) === QUEST_STATUS.AVAILABLE).length;
+  const sprintActive  = activeSprint ? 1 : 0;
+  const sprintClaimable = SPRINT_POOL.filter(s => getSprintStatus(s, player) === QUEST_STATUS.CLAIMABLE).length;
 
   useEffect(() => { setSelectedQuest(null); }, [tab]);
 
@@ -449,6 +601,7 @@ Terse, atmospheric, present tense. Crime fiction voice — Elmore Leonard meets 
     { id: "story",     label: "Story Arc",     badge: `${storyComplete}/${STORY_QUESTS.length}` },
     { id: "side",      label: "Side Jobs",     badge: sideComplete > 0 ? `${sideComplete}/${SIDE_QUESTS.length}` : null },
     { id: "contracts", label: "Contracts",     badge: contractsDone > 0 ? String(contractsDone) : null },
+    { id: "sprints",   label: "Sprints",       badge: sprintClaimable > 0 ? "!" : sprintActive > 0 ? "▶" : null },
     { id: "world",     label: "World Events",  badge: worldEvent ? "!" : null },
   ];
 
@@ -537,7 +690,7 @@ Terse, atmospheric, present tense. Crime fiction voice — Elmore Leonard meets 
             {selectedQuest && STORY_QUESTS.find(q => q.id === selectedQuest.id) ? (
               <QuestDetail
                 quest={selectedQuest} player={player}
-                questProgress={questProgress[selectedQuest.id] || {}}
+                questProgress={questProgress}
                 status={getQuestStatus(selectedQuest, player)}
                 onAccept={onQuestAccept} onClaim={onQuestClaim}
                 aiNarration={aiNarrations[selectedQuest.id]} loadingAI={loadingAI}
@@ -594,7 +747,7 @@ Terse, atmospheric, present tense. Crime fiction voice — Elmore Leonard meets 
             {selectedQuest && SIDE_QUESTS.find(q => q.id === selectedQuest.id) ? (
               <QuestDetail
                 quest={selectedQuest} player={player}
-                questProgress={questProgress[selectedQuest.id] || {}}
+                questProgress={questProgress}
                 status={getQuestStatus(selectedQuest, player)}
                 onAccept={onQuestAccept} onClaim={onQuestClaim}
                 aiNarration={aiNarrations[selectedQuest.id]} loadingAI={loadingAI}
@@ -683,6 +836,71 @@ Terse, atmospheric, present tense. Crime fiction voice — Elmore Leonard meets 
 
       {/* ── WORLD EVENTS TAB ── */}
       {tab === "world" && <WorldEventsTab worldEvent={worldEvent} />}
+
+      {/* ── SPRINTS TAB ── */}
+      {tab === "sprints" && (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+            <div>
+              <div style={{ fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 600, color: "var(--amber)", letterSpacing: "0.06em" }}>
+                48H SPRINT CHALLENGES
+              </div>
+              <div style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--text-secondary)", fontStyle: "italic", marginTop: 2 }}>
+                One active sprint at a time. Clock starts the moment you commit. High risk, high reward.
+              </div>
+            </div>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)", textAlign: "right" }}>
+              <div>{sprintsWon.length} WON</div>
+              {activeSprint && <div style={{ color: "#5a7ec8", marginTop: 3 }}>▶ SPRINT ACTIVE</div>}
+            </div>
+          </div>
+
+          {/* Active sprint banner */}
+          {activeSprint && (() => {
+            const s = SPRINT_POOL.find(x => x.id === activeSprint.sprintId);
+            const status = s ? getSprintStatus(s, player) : null;
+            if (!s) return null;
+            const timeLeft = formatTimeLeft(activeSprint.startedAt, s.durationHours);
+            const isClaimable = status === QUEST_STATUS.CLAIMABLE;
+            return (
+              <div style={{
+                background: isClaimable ? "rgba(61,140,90,0.1)" : "rgba(90,126,200,0.08)",
+                border: `1px solid ${isClaimable ? "var(--green)" : "#5a7ec8"}`,
+                borderRadius: 2, padding: "14px 18px", marginBottom: 18,
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}>
+                <div>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: isClaimable ? "var(--green)" : "#5a7ec8", letterSpacing: "0.12em" }}>
+                    {isClaimable ? "✓ OBJECTIVE MET — CLAIM BELOW" : "▶ ACTIVE SPRINT"}
+                  </span>
+                  <div style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 600, color: "var(--amber)", marginTop: 3 }}>
+                    {s.icon} {s.title}
+                  </div>
+                </div>
+                {!isClaimable && (
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "#5a7ec8", fontWeight: 600, letterSpacing: "0.06em" }}>
+                    {timeLeft}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            {SPRINT_POOL.map(sprint => (
+              <SprintCard
+                key={sprint.id}
+                sprint={sprint}
+                player={player}
+                status={getSprintStatus(sprint, player)}
+                onAccept={onSprintAccept}
+                onClaim={onSprintClaim}
+                onAbandon={onSprintAbandon}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

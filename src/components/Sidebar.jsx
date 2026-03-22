@@ -115,7 +115,7 @@ export default function Sidebar({ activePage, onNavigate, player }) {
       </nav>
       <div className="sidebar-footer">
         <div className="sidebar-section-label">System</div>
-        <div className="sidebar-footer-stat mono"><span className="muted">v0.5.2-alpha</span></div>
+        <div className="sidebar-footer-stat mono"><span className="muted">v0.6.0-alpha</span></div>
       </div>
       <style>{`
         .sidebar{grid-area:sidebar;background:var(--bg-surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;padding:12px 0;}

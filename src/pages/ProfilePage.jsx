@@ -233,6 +233,74 @@ export default function ProfilePage({ player }) {
             )}
           </div>
 
+          {/* Titles Dossier */}
+          {(player.titles || []).length > 0 && (
+            <div className="profile-section">
+              <div className="section-label">
+                Earned Titles ({(player.titles || []).length})
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {(player.titles || []).map(tid => {
+                  const t = TITLES[tid];
+                  if (!t) return null;
+                  const isActive = tid === player.activeTitle;
+                  return (
+                    <div key={tid} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      padding: "8px 12px",
+                      background: isActive ? `${t.color}12` : "var(--bg-raised)",
+                      border: `1px solid ${isActive ? t.color : "var(--border)"}`,
+                      borderRadius: 2,
+                    }}>
+                      <div>
+                        <div style={{
+                          fontFamily: "var(--font-display)", fontSize: "0.82em", fontWeight: 600,
+                          letterSpacing: "0.08em", color: t.color,
+                        }}>
+                          {isActive ? "🏷 " : ""}{t.label}
+                        </div>
+                        <div style={{
+                          fontFamily: "var(--font-body)", fontSize: "0.7em",
+                          color: "var(--text-muted)", fontStyle: "italic", marginTop: 2,
+                        }}>
+                          {t.desc}
+                        </div>
+                      </div>
+                      {isActive && (
+                        <span style={{
+                          fontFamily: "var(--font-mono)", fontSize: "0.58em",
+                          color: t.color, border: `1px solid ${t.color}`,
+                          padding: "2px 6px", letterSpacing: "0.12em", flexShrink: 0,
+                        }}>ACTIVE</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Quest-exclusive inventory items */}
+          {(player.inventory || []).some(i => i.questOnly) && (
+            <div className="profile-section">
+              <div className="section-label">Exclusive Items</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {(player.inventory || []).filter(i => i.questOnly).map(inv => (
+                  <div key={inv.id} style={{
+                    padding: "8px 12px",
+                    background: "rgba(200,146,42,0.05)",
+                    border: "1px solid var(--amber-dim)",
+                    borderRadius: 2,
+                  }}>
+                    <div style={{ fontFamily: "var(--font-display)", fontSize: "0.8em", fontWeight: 600, color: "var(--amber)", letterSpacing: "0.06em" }}>
+                      ★ {inv.name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Achievements */}
           <div className="profile-section">
             <div className="section-label">Achievements ({unlocked.length} / {ACHIEVEMENTS.length})</div>

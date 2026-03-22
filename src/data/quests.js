@@ -863,6 +863,46 @@ export const EXCLUSIVE_ITEMS = {
     desc: "First access to Viktor's full inventory before it hits the open market. 40% below market.",
     statBonus: { muscle: 6, nerve: 4 }, questOnly: true, rarity: "exclusive",
   },
+  exclusive_da_relationship: {
+    id: "exclusive_da_relationship", name: "District Attorney — Active Contact",
+    desc: "A DA on retainer through Santos' introduction. Can delay prosecution, seal records, create investigative blind spots.",
+    statBonus: { connections: 8, reputation: 6 }, heatReduction: 30, questOnly: true, rarity: "exclusive",
+  },
+  exclusive_sanctuary_property: {
+    id: "exclusive_sanctuary_property", name: "Sanctuary Property Access",
+    desc: "A community-protected warehouse untouchable without federal oversight. Safe storage, operational cover.",
+    statBonus: { stealth: 8, connections: 6 }, questOnly: true, rarity: "exclusive",
+  },
+  exclusive_hex_zero_trace: {
+    id: "exclusive_hex_zero_trace", name: "Zero Trace Protocol",
+    desc: "Hex Nine's full digital scrub. Operational footprint invisible to standard law enforcement tracking.",
+    statBonus: { stealth: 10, techSavvy: 6 }, questOnly: true, rarity: "exclusive",
+  },
+  exclusive_private_darknet: {
+    id: "exclusive_private_darknet", name: "Private Darknet Infrastructure",
+    desc: "Encrypted communication network for your entire crew. End-to-end, compartmentalized. Federal intercept proof.",
+    statBonus: { techSavvy: 10, stealth: 6, intelligence: 4 }, questOnly: true, rarity: "exclusive",
+  },
+  exclusive_qm_catalogue: {
+    id: "exclusive_qm_catalogue", name: "Quartermaster — Restricted Catalogue",
+    desc: "First access to the Quartermaster's full restricted inventory. Items unavailable through standard channels.",
+    statBonus: { muscle: 5, dexterity: 6 }, questOnly: true, rarity: "exclusive",
+  },
+  exclusive_military_cache: {
+    id: "exclusive_military_cache", name: "Decommissioned Military Cache",
+    desc: "Equipment from a decommissioned military facility. No serial numbers, no provenance, total operational advantage.",
+    statBonus: { muscle: 10, dexterity: 8, nerve: 6 }, questOnly: true, rarity: "exclusive",
+  },
+  exclusive_inter_org_access: {
+    id: "exclusive_inter_org_access", name: "Inter-Organization Summit Access",
+    desc: "Sofia V.'s personal vouching. Recognized by three major organizations as a trusted third party.",
+    statBonus: { intelligence: 8, connections: 10 }, questOnly: true, rarity: "exclusive",
+  },
+  exclusive_sofia_network: {
+    id: "exclusive_sofia_network", name: "The Diplomatic Network",
+    desc: "Full access to Sofia V.'s high-society criminal network. Politicians, lawyers, financiers.",
+    statBonus: { intelligence: 12, connections: 14, reputation: 8 }, questOnly: true, rarity: "exclusive",
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -908,9 +948,350 @@ export const getQuestStatus = (quest, player) => {
   return QUEST_STATUS.AVAILABLE;
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SIDE QUEST CHAINS — Padre Santos, Hex Nine, The Quartermaster, Sofia V
+// ─────────────────────────────────────────────────────────────────────────────
+
+// PADRE SANTOS: "The Blessing" — community cover, institutional protection
+SIDE_QUESTS.push(
+  {
+    id: "sq_santos_1", type: QUEST_TYPES.SIDE, series: "padre_santos",
+    seriesLabel: "Padre Santos — The Blessing", order: 1,
+    title: "Community Work", subtitle: "The best cover is genuine.",
+    narrative: "Padre Santos runs three community centers and a food bank. He doesn't know what you do — or he chooses not to. Donate enough and contribute enough that when your name comes up in conversation, it comes up right.",
+    aiPromptHint: "criminal building community cover through legitimate charitable work, maintaining plausible deniability",
+    objectives: [
+      { id: "obj_rep40",  label: "Reach 40 Reputation",    check: (p) => (p.stats?.reputation || 0) >= 40 },
+      { id: "obj_launder30k", label: "Launder $30,000 total", check: (p) => (p.totalLaundered || 0) >= 30000 },
+    ],
+    trustReq: 0, contactId: "padre_santos", prevQuestId: null,
+    rewards: { cash: 10000, xp: 600, statBonus: { connections: 4, reputation: 5 }, title: null, exclusiveItem: null,
+      upgradeNote: "Santos' network provides low-heat cover for operations" },
+  },
+  {
+    id: "sq_santos_2", type: QUEST_TYPES.SIDE, series: "padre_santos",
+    seriesLabel: "Padre Santos — The Blessing", order: 2,
+    title: "The Collar", subtitle: "A priest with a direct line to the right people.",
+    narrative: "Santos knows a DA. Old friends. He can arrange an introduction — purely social, of course. A relationship with a DA isn't leverage. It's insurance. But you need to be worthy of the introduction.",
+    aiPromptHint: "criminal establishing relationship with district attorney through intermediary, political protection",
+    objectives: [
+      { id: "obj_level8",   label: "Reach Level 8",         check: (p) => (p.level || 1) >= 8 },
+      { id: "obj_honor50",  label: "Reach 50 Honor",        check: (p) => (p.stats?.honor || 50) >= 50 },
+      { id: "obj_missions4", label: "Complete 4 faction missions", check: (p) => (p.completedMissions?.length || 0) >= 4 },
+    ],
+    trustReq: 1, contactId: "padre_santos", prevQuestId: "sq_santos_1",
+    rewards: { cash: 22000, xp: 1100, statBonus: { connections: 5, intelligence: 3 },
+      exclusiveItem: "exclusive_da_relationship" },
+  },
+  {
+    id: "sq_santos_3", type: QUEST_TYPES.SIDE, series: "padre_santos",
+    seriesLabel: "Padre Santos — The Blessing", order: 3,
+    title: "Sanctuary", subtitle: "Some places are untouchable.",
+    narrative: "Santos has a property — a warehouse converted to a community arts space — that law enforcement won't touch without federal oversight. It can be used for storage. The arrangement is permanent, if you keep the community programs funded.",
+    aiPromptHint: "establishing a protected safe house through community institution, criminal infrastructure via legitimate fronts",
+    objectives: [
+      { id: "obj_rep70",    label: "Reach 70 Reputation",    check: (p) => (p.stats?.reputation || 0) >= 70 },
+      { id: "obj_launder150k", label: "Launder $150,000 total", check: (p) => (p.totalLaundered || 0) >= 150000 },
+    ],
+    trustReq: 2, contactId: "padre_santos", prevQuestId: "sq_santos_2",
+    rewards: { cash: 35000, xp: 1600, statBonus: { connections: 6, reputation: 8, stealth: 4 },
+      title: "Community Pillar", exclusiveItem: "exclusive_sanctuary_property" },
+  }
+);
+
+// HEX NINE: "Ghost Signal" — cyber security, encryption, digital ghost
+SIDE_QUESTS.push(
+  {
+    id: "sq_hex_1", type: QUEST_TYPES.SIDE, series: "hex_nine",
+    seriesLabel: "Hex Nine — Ghost Signal", order: 1,
+    title: "Signal Wipe", subtitle: "Your digital trail is a liability.",
+    narrative: "Hex Nine doesn't meet clients who leave search histories. Your current operational security is basic at best. She'll fix your digital exposure — but she needs to see your setup first. And she needs to see you're serious.",
+    aiPromptHint: "criminal improving operational security, digital privacy, working with elite hacker",
+    objectives: [
+      { id: "obj_tech40",    label: "Reach 40 Tech Savvy",          check: (p) => (p.stats?.techSavvy || 0) >= 40 },
+      { id: "obj_encounters2", label: "Escape 2 police encounters", check: (p) => (p.encountersEscaped || 0) >= 2 },
+    ],
+    trustReq: 0, contactId: "hex_nine", prevQuestId: null,
+    rewards: { cash: 12000, xp: 650, statBonus: { techSavvy: 5, stealth: 3 }, exclusiveItem: null,
+      upgradeNote: "Hex Nine's services now available at reduced cost" },
+  },
+  {
+    id: "sq_hex_2", type: QUEST_TYPES.SIDE, series: "hex_nine",
+    seriesLabel: "Hex Nine — Ghost Signal", order: 2,
+    title: "Zero Trace", subtitle: "Become untrackable.",
+    narrative: "She found three active tracking vectors tied to your phone number, a loyalty card account, and a recurring payment. She can scrub all three — but needs you to run a parallel op that creates enough noise to mask the cleanup. You're wiping your own ghost.",
+    aiPromptHint: "digital counter-surveillance operation, erasing criminal identity from tracking systems",
+    objectives: [
+      { id: "obj_tech60",   label: "Reach 60 Tech Savvy",  check: (p) => (p.stats?.techSavvy || 0) >= 60 },
+      { id: "obj_stealth60", label: "Reach 60 Stealth",    check: (p) => (p.stats?.stealth || 0) >= 60 },
+      { id: "obj_heat_low", label: "Have heat below 20%",  check: (p) => (p.heat || 0) < 20 },
+    ],
+    trustReq: 1, contactId: "hex_nine", prevQuestId: "sq_hex_1",
+    rewards: { cash: 28000, xp: 1300, statBonus: { techSavvy: 6, stealth: 5 },
+      exclusiveItem: "exclusive_hex_zero_trace" },
+  },
+  {
+    id: "sq_hex_3", type: QUEST_TYPES.SIDE, series: "hex_nine",
+    seriesLabel: "Hex Nine — Ghost Signal", order: 3,
+    title: "The Architecture", subtitle: "Your own private network.",
+    narrative: "Hex Nine builds encrypted communication infrastructure for three other organizations. She's offering you the same. A private darknet — your crew, your operations, all end-to-end encrypted and compartmentalized. Law enforcement can't touch what they can't read.",
+    aiPromptHint: "private criminal communication network, high-level operational security infrastructure",
+    objectives: [
+      { id: "obj_level12",  label: "Reach Level 12",           check: (p) => (p.level || 1) >= 12 },
+      { id: "obj_tech75",   label: "Reach 75 Tech Savvy",      check: (p) => (p.stats?.techSavvy || 0) >= 75 },
+      { id: "obj_crew4",    label: "Have 4+ crew members",     check: (p) => (p.crew?.length || 0) >= 4 },
+    ],
+    trustReq: 2, contactId: "hex_nine", prevQuestId: "sq_hex_2",
+    rewards: { cash: 50000, xp: 2200, statBonus: { techSavvy: 8, stealth: 6, intelligence: 5 },
+      title: "Ghost Signal", exclusiveItem: "exclusive_private_darknet" },
+  }
+);
+
+// THE QUARTERMASTER: "Supply Line" — equipment, logistics, infrastructure
+SIDE_QUESTS.push(
+  {
+    id: "sq_qm_1", type: QUEST_TYPES.SIDE, series: "the_quartermaster",
+    seriesLabel: "The Quartermaster — Supply Line", order: 1,
+    title: "Requisition", subtitle: "Professionals use professional equipment.",
+    narrative: "The Quartermaster supplies four organizations currently. He doesn't take new clients lightly. Place a serious initial order and pay promptly. His first assessment of you is his only one.",
+    aiPromptHint: "establishing relationship with elite criminal supply chain operator, first procurement",
+    objectives: [
+      { id: "obj_market_buy3", label: "Purchase 3 items from the Black Market", check: (p) => (p.inventory?.length || 0) >= 3 },
+      { id: "obj_muscle50",   label: "Reach 50 Muscle",                         check: (p) => (p.stats?.muscle || 0) >= 50 },
+    ],
+    trustReq: 0, contactId: "the_quartermaster", prevQuestId: null,
+    rewards: { cash: 8000, xp: 500, statBonus: { muscle: 3, dexterity: 3 }, exclusiveItem: null,
+      upgradeNote: "Quartermaster's Black Market prices reduced 10%" },
+  },
+  {
+    id: "sq_qm_2", type: QUEST_TYPES.SIDE, series: "the_quartermaster",
+    seriesLabel: "The Quartermaster — Supply Line", order: 2,
+    title: "Redundancy", subtitle: "Never rely on a single source.",
+    narrative: "He lost a supplier last year to a federal bust. He's rebuilding the logistics chain and needs a secondary distribution partner. Move three shipments clean — no heat, no arrests, no exposure. In return, he gives you first access to his restricted catalogue.",
+    aiPromptHint: "criminal logistics operation, moving supply chain shipments without law enforcement attention",
+    objectives: [
+      { id: "obj_crimes20",  label: "Complete 20 successful crimes",   check: (p) => p.crimesSucceeded >= 20 },
+      { id: "obj_no_arrest", label: "Complete 5 crimes without arrest", check: (p, prog) => (prog?.consecutiveCleanCrimes || 0) >= 5 },
+      { id: "obj_dex50",     label: "Reach 50 Dexterity",              check: (p) => (p.stats?.dexterity || 0) >= 50 },
+    ],
+    trustReq: 1, contactId: "the_quartermaster", prevQuestId: "sq_qm_1",
+    rewards: { cash: 20000, xp: 1000, statBonus: { muscle: 4, dexterity: 5 },
+      exclusiveItem: "exclusive_qm_catalogue" },
+  },
+  {
+    id: "sq_qm_3", type: QUEST_TYPES.SIDE, series: "the_quartermaster",
+    seriesLabel: "The Quartermaster — Supply Line", order: 3,
+    title: "The Arsenal", subtitle: "Total equipment superiority.",
+    narrative: "The Quartermaster has access to a decommissioned military storage facility. Once. He's offering you a full equipment package — things that don't appear on any commercial or criminal market. But you need to be the kind of operation that warrants that level of gear.",
+    aiPromptHint: "acquiring military-grade criminal equipment, criminal career milestone of organizational maturity",
+    objectives: [
+      { id: "obj_level15",   label: "Reach Level 15",             check: (p) => (p.level || 1) >= 15 },
+      { id: "obj_districts4", label: "Control 4+ districts",      check: (p) => (p.ownedDistricts?.length || 0) >= 4 },
+      { id: "obj_rep80",     label: "Reach 80 Reputation",        check: (p) => (p.stats?.reputation || 0) >= 80 },
+    ],
+    trustReq: 2, contactId: "the_quartermaster", prevQuestId: "sq_qm_2",
+    rewards: { cash: 60000, xp: 2500, statBonus: { muscle: 8, dexterity: 8, nerve: 5 },
+      title: "Armed to the Teeth", exclusiveItem: "exclusive_military_cache" },
+  }
+);
+
+// SOFIA V: "The Diplomat" — negotiation, high-society access, political leverage
+SIDE_QUESTS.push(
+  {
+    id: "sq_sofia_1", type: QUEST_TYPES.SIDE, series: "sofia_v",
+    seriesLabel: "Sofia V. — The Diplomat", order: 1,
+    title: "The Introduction", subtitle: "Some doors require the right name.",
+    narrative: "Sofia V. brokers introductions between people who shouldn't officially know each other. She moves in circles where your kind of work is considered crude — until it becomes useful. Prove you can operate with restraint. She'll see if you're worth vouching for.",
+    aiPromptHint: "criminal proving sophistication to high-society fixer, demonstrating strategic rather than brute-force approach",
+    objectives: [
+      { id: "obj_intel50",     label: "Reach 50 Intelligence",         check: (p) => (p.stats?.intelligence || 0) >= 50 },
+      { id: "obj_connections50", label: "Reach 50 Connections",        check: (p) => (p.stats?.connections || 0) >= 50 },
+      { id: "obj_launder75k",  label: "Launder $75,000 total",         check: (p) => (p.totalLaundered || 0) >= 75000 },
+    ],
+    trustReq: 0, contactId: "sofia_v", prevQuestId: null,
+    rewards: { cash: 18000, xp: 900, statBonus: { intelligence: 4, connections: 5 }, exclusiveItem: null,
+      upgradeNote: "Sofia V. available for high-end negotiation assistance" },
+  },
+  {
+    id: "sq_sofia_2", type: QUEST_TYPES.SIDE, series: "sofia_v",
+    seriesLabel: "Sofia V. — The Diplomat", order: 2,
+    title: "The Table", subtitle: "Where real power is negotiated.",
+    narrative: "She's arranged a seat at a meeting between three organizations. Normally you wouldn't be invited to the same table as these people. Your role: listen, contribute minimally, don't embarrass her. What you take away from this conversation is worth more than anything you'd earn that week.",
+    aiPromptHint: "attending high-level inter-criminal organization summit, absorbing intelligence and making calculated impression",
+    objectives: [
+      { id: "obj_level10",   label: "Reach Level 10",             check: (p) => (p.level || 1) >= 10 },
+      { id: "obj_rep65",     label: "Reach 65 Reputation",        check: (p) => (p.stats?.reputation || 0) >= 65 },
+      { id: "obj_missions5",  label: "Complete 5 faction missions", check: (p) => (p.completedMissions?.length || 0) >= 5 },
+    ],
+    trustReq: 1, contactId: "sofia_v", prevQuestId: "sq_sofia_1",
+    rewards: { cash: 40000, xp: 1800, statBonus: { intelligence: 6, connections: 8 },
+      exclusiveItem: "exclusive_inter_org_access" },
+  },
+  {
+    id: "sq_sofia_3", type: QUEST_TYPES.SIDE, series: "sofia_v",
+    seriesLabel: "Sofia V. — The Diplomat", order: 3,
+    title: "The Deal", subtitle: "You don't negotiate at this level. You architect.",
+    narrative: "Three organizations want the same territory. Sofia has identified an arrangement where all three can profit. She needs someone to backstop the deal — provide the financial guarantee that makes all parties feel secure. That's you. The exposure is real. The payoff is unprecedented.",
+    aiPromptHint: "criminal as guarantor in major inter-organizational deal, diplomatic criminal power broker role",
+    objectives: [
+      { id: "obj_level13",    label: "Reach Level 13",              check: (p) => (p.level || 1) >= 13 },
+      { id: "obj_intel80",    label: "Reach 80 Intelligence",       check: (p) => (p.stats?.intelligence || 0) >= 80 },
+      { id: "obj_connections80", label: "Reach 80 Connections",     check: (p) => (p.stats?.connections || 0) >= 80 },
+      { id: "obj_earn500k",   label: "Earn $500,000 total",         check: (p) => (p.totalEarned || 0) >= 500000 },
+    ],
+    trustReq: 2, contactId: "sofia_v", prevQuestId: "sq_sofia_2",
+    rewards: { cash: 100000, xp: 3500, statBonus: { intelligence: 10, connections: 12, reputation: 8 },
+      title: "The Diplomat", exclusiveItem: "exclusive_sofia_network" },
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPRINT CHALLENGES — 48-hour timed high-stakes objectives
+// Pool of 10. Player picks 1 active at a time. Clock starts on accept.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SPRINT_POOL = [
+  {
+    id: "sprint_big_earner",
+    title: "Quick Score",
+    subtitle: "48 hours. Make it count.",
+    icon: "💰", category: "Financial", durationHours: 48, difficulty: 3, levelReq: 5,
+    desc: "Earn $100,000 in 48 hours from crimes only. Clean money moves too slow — this is a street sprint.",
+    objective: { label: "Earn $100,000 in crimes (delta from start)", check: (p, snap) => ((p.totalEarned || 0) - (snap?.totalEarned || 0)) >= 100000 },
+    rewards: { cash: 30000, xp: 2000, statBonus: { nerve: 4 }, title: null },
+    realNote: "DEA documents 'blitz periods' where criminal crews operate at maximum tempo to capitalize on enforcement gaps — typically 48-72 hour windows.",
+  },
+  {
+    id: "sprint_ghost_run",
+    title: "Phantom Week",
+    subtitle: "Move through the city like you don't exist.",
+    icon: "👻", category: "Stealth", durationHours: 48, difficulty: 4, levelReq: 6,
+    desc: "Complete 10 crimes in 48 hours with zero arrests. Perfect operational security.",
+    objective: { label: "10 crimes, zero arrests in the window", check: (p, snap) => ((p.crimesSucceeded || 0) - (snap?.crimesSucceeded || 0)) >= 10 && (p.timesArrested || 0) === (snap?.timesArrested || 0) },
+    rewards: { cash: 40000, xp: 2500, statBonus: { stealth: 5, streetSmarts: 4 }, title: "The Phantom" },
+    realNote: "FBI analysis: Top-tier criminal operatives maintain arrest-free streaks averaging 18 months. The discipline required is the primary differentiator from lower-level operators.",
+  },
+  {
+    id: "sprint_launder_race",
+    title: "Clean Hands",
+    subtitle: "Turn dirt into paper, fast.",
+    icon: "♻️", category: "Financial", durationHours: 48, difficulty: 3, levelReq: 4,
+    desc: "Launder $50,000 in a 48-hour window. Use every channel available.",
+    objective: { label: "Launder $50,000 in the window", check: (p, snap) => ((p.totalLaundered || 0) - (snap?.totalLaundered || 0)) >= 50000 },
+    rewards: { cash: 20000, xp: 1500, statBonus: { intelligence: 3 }, title: null },
+    realNote: "FinCEN: 'Velocity laundering' — pushing large volumes through infrastructure in compressed time frames — is a documented red flag in AML analysis.",
+  },
+  {
+    id: "sprint_heat_runner",
+    title: "Running Hot",
+    subtitle: "How long can you stay in the fire?",
+    icon: "🌡", category: "Endurance", durationHours: 48, difficulty: 5, levelReq: 7,
+    desc: "Commit 5 successful crimes while your heat is above 60%. Maximum pressure. Maximum reward.",
+    objective: { label: "5 crimes at 60%+ heat (delta from start)", check: (p, snap) => ((p.questProgress?.highHeatCrimes || 0) - (snap?.highHeatCrimes || 0)) >= 5 },
+    rewards: { cash: 55000, xp: 3000, statBonus: { nerve: 6, reputation: 5 }, title: "Heat Seeker" },
+    realNote: "DOJ: 'Hot operators' — those who continue working under active law enforcement surveillance — are responsible for disproportionate criminal output but have significantly shorter career spans.",
+  },
+  {
+    id: "sprint_territory_blitz",
+    title: "Land Grab",
+    subtitle: "Territory doesn't wait for permission.",
+    icon: "⬡", category: "Territory", durationHours: 48, difficulty: 4, levelReq: 8,
+    desc: "Claim 2 new territory districts in 48 hours. Fast expansion, max pressure.",
+    objective: { label: "Claim 2 districts in the window", check: (p, snap) => ((p.ownedDistricts?.length || 0) - (snap?.ownedDistricts || 0)) >= 2 },
+    rewards: { cash: 45000, xp: 2500, statBonus: { reputation: 6, muscle: 4 }, title: null },
+    realNote: "FBI RICO: Rapid territorial acquisition events are documented as destabilizing signals — typically preceding faction conflicts or major enforcement operations.",
+  },
+  {
+    id: "sprint_tier4_run",
+    title: "Tier Up",
+    subtitle: "Only the serious attempts this level.",
+    icon: "🗂", category: "Criminal", durationHours: 48, difficulty: 4, levelReq: 9,
+    desc: "Successfully complete 3 Tier 4 crimes within 48 hours. High risk, precise execution.",
+    objective: { label: "3 Tier 4+ crimes in the window", check: (p, snap) => ((p.questProgress?.tier4Sprints || 0) - (snap?.tier4Sprints || 0)) >= 3 },
+    rewards: { cash: 50000, xp: 3000, statBonus: { nerve: 5, reputation: 6 }, title: null },
+    realNote: "FBI: High-severity criminal acts clustered in short windows are documented in 28% of organized crime cases reviewed for RICO prosecution.",
+  },
+  {
+    id: "sprint_crew_blitz",
+    title: "Full Deployment",
+    subtitle: "Your crew earns their pay today.",
+    icon: "👥", category: "Operations", durationHours: 48, difficulty: 3, levelReq: 6,
+    desc: "With a full crew active, complete 8 crimes in 48 hours. Every member pulling weight.",
+    objective: { label: "8 crimes with 3+ crew (delta from start)", check: (p, snap) => (p.crew?.length || 0) >= 3 && ((p.crimesSucceeded || 0) - (snap?.crimesSucceeded || 0)) >= 8 },
+    rewards: { cash: 35000, xp: 2000, statBonus: { connections: 4, muscle: 3 }, title: null },
+    realNote: "Organized crime research: Operations involving 3+ participants have 40% higher success rates but generate exponentially more investigative attention.",
+  },
+  {
+    id: "sprint_network_flex",
+    title: "Six Contacts",
+    subtitle: "Work every connection you have.",
+    icon: "🕸", category: "Network", durationHours: 48, difficulty: 3, levelReq: 7,
+    desc: "Use 4 different Dark Web contacts within 48 hours. Leverage the network fully.",
+    objective: { label: "Use 4 different contacts in the window", check: (p, snap) => {
+      const beforeKeys = new Set(Object.keys(snap?.usedContactJobs || {}));
+      const nowKeys    = new Set(Object.keys(p.usedContactJobs || {}));
+      const newUsed = [...nowKeys].filter(k => !beforeKeys.has(k));
+      const distinctContacts = new Set(newUsed.map(k => k.split("_").slice(0, 2).join("_")));
+      return distinctContacts.size >= 4;
+    }},
+    rewards: { cash: 30000, xp: 1800, statBonus: { connections: 6, intelligence: 4 }, title: null },
+    realNote: "DEA: Multi-source criminal networks are documented as significantly more resilient — diversified contact use is a marker of operational maturity.",
+  },
+  {
+    id: "sprint_escape_artist",
+    title: "Teflon",
+    subtitle: "Nothing sticks.",
+    icon: "🏃", category: "Endurance", durationHours: 48, difficulty: 5, levelReq: 8,
+    desc: "Escape 3 police encounters in 48 hours. Active enforcement, active evasion.",
+    objective: { label: "Escape 3 encounters in the window", check: (p, snap) => ((p.encountersEscaped || 0) - (snap?.encountersEscaped || 0)) >= 3 },
+    rewards: { cash: 45000, xp: 2800, statBonus: { stealth: 6, streetSmarts: 5 }, title: "Teflon" },
+    realNote: "DOJ: 'Evasion ratio' — arrests avoided per enforcement contact — is a documented metric in organized crime career analysis. High ratios correlate with longer operational lifespans.",
+  },
+  {
+    id: "sprint_million_run",
+    title: "The Million Mark",
+    subtitle: "Numbers most people never see.",
+    icon: "🏆", category: "Legacy", durationHours: 72, difficulty: 5, levelReq: 12,
+    desc: "Reach $1,000,000 total earned. This is the threshold that changes everything.",
+    objective: { label: "Reach $1,000,000 total earned", check: (p, _snap) => (p.totalEarned || 0) >= 1_000_000 },
+    rewards: { cash: 100000, xp: 8000, statBonus: { reputation: 10, nerve: 5, connections: 5 }, title: "The Million" },
+    realNote: "Treasury Dept: The $1M threshold is a documented inflection point in criminal career trajectories. It's when organizations transition from tactical to strategic operations.",
+  },
+];
+
+export const getSprintStatus = (sprint, player) => {
+  const activeSprint   = player.activeSprint;
+  const wonSprints     = player.wonSprints || [];
+  if (wonSprints.includes(sprint.id))             return QUEST_STATUS.COMPLETE;
+  if (activeSprint?.sprintId === sprint.id) {
+    const snap      = player.sprintSnapshot || {};
+    const allDone   = sprint.objective.check(player, snap);
+    const elapsed   = Date.now() - (activeSprint.startedAt || 0);
+    const maxMs     = (sprint.durationHours || 48) * 3600000;
+    if (elapsed > maxMs && !allDone)               return QUEST_STATUS.EXPIRED;
+    if (allDone)                                   return QUEST_STATUS.CLAIMABLE;
+    return QUEST_STATUS.ACTIVE;
+  }
+  if (activeSprint)                               return QUEST_STATUS.LOCKED; // another sprint active
+  if ((player.level || 1) < (sprint.levelReq || 1)) return QUEST_STATUS.LOCKED;
+  return QUEST_STATUS.AVAILABLE;
+};
+
+export const formatTimeLeft = (startedAt, durationHours) => {
+  const msLeft = (durationHours * 3600000) - (Date.now() - startedAt);
+  if (msLeft <= 0) return "EXPIRED";
+  const h = Math.floor(msLeft / 3600000);
+  const m = Math.floor((msLeft % 3600000) / 60000);
+  return `${h}h ${m}m left`;
+};
+
 export const SIDE_QUEST_SERIES = [
-  { id: "mama_chen",  label: "Mama Chen — Clean Sweep",    contactId: "mama_chen",  icon: "💸" },
-  { id: "el_chivato", label: "El Chivato — Ghost Protocol", contactId: "el_chivato", icon: "🕵" },
-  { id: "viktor_k",   label: "Viktor K. — Arms Race",       contactId: "viktor_k",   icon: "🔫" },
-  { id: "ghost_zero", label: "Ghost_Zero — Zero Day",       contactId: "ghost_zero", icon: "💻" },
+  { id: "mama_chen",         label: "Mama Chen — Clean Sweep",         contactId: "mama_chen",         icon: "💸" },
+  { id: "el_chivato",        label: "El Chivato — Ghost Protocol",      contactId: "el_chivato",        icon: "🕵" },
+  { id: "viktor_k",          label: "Viktor K. — Arms Race",            contactId: "viktor_k",          icon: "🔫" },
+  { id: "ghost_zero",        label: "Ghost_Zero — Zero Day",            contactId: "ghost_zero",        icon: "💻" },
+  { id: "padre_santos",      label: "Padre Santos — The Blessing",      contactId: "padre_santos",      icon: "⛪" },
+  { id: "hex_nine",          label: "Hex Nine — Ghost Signal",          contactId: "hex_nine",          icon: "📡" },
+  { id: "the_quartermaster", label: "The Quartermaster — Supply Line",  contactId: "the_quartermaster", icon: "📦" },
+  { id: "sofia_v",           label: "Sofia V. — The Diplomat",          contactId: "sofia_v",           icon: "🤝" },
 ];

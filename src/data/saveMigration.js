@@ -3,7 +3,7 @@
 
 import { snapshotPlayerState, isSameDay } from "./dailyChallenges";
 
-export const CURRENT_SAVE_VERSION = 5;
+export const CURRENT_SAVE_VERSION = 6;
 
 const DEFAULTS = {
   health:               100,
@@ -33,6 +33,20 @@ const DEFAULTS = {
   lastHeatDecay:        Date.now(),
   lastHealthRegen:      Date.now(),
   lastTerritoryTick:    Date.now(),
+  // Quest system v0.6
+  completedQuests:      [],
+  activeQuests:         [],
+  completedContracts:   [],
+  activeContracts:      [],
+  contractSnapshots:    {},
+  wonSprints:           [],
+  activeSprint:         null,
+  sprintSnapshot:       null,
+  questProgress:        {},
+  titles:               ["nobody"],
+  activeTitle:          "nobody",
+  unlockedContacts:     [],
+  permanentBonuses:     {},
 };
 
 export function migratePlayer(raw) {

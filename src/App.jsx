@@ -22,6 +22,7 @@ import DarkWebPage         from "./pages/DarkWebPage";
 import SettingsPage        from "./pages/SettingsPage";
 import QuestsPage          from "./pages/QuestsPage";
 import StatisticsPage      from "./pages/StatisticsPage";
+import NewsFeedPage        from "./pages/NewsFeedPage";
 import TutorialOverlay     from "./components/TutorialOverlay";
 import Toasts              from "./components/Toasts";
 import { toast }           from "./components/Toasts";
@@ -204,6 +205,35 @@ export default function App() {
         _lastCrimeEarning: outcome.cashGain || 0,
         activeCrimeTimer: outcome.cooldown ? { crimeId: outcome.crime.id, startedAt: Date.now(), durationMs: outcome.cooldown } : prev.activeCrimeTimer,
         stats: {...prev.stats, reputation: outcome.success ? Math.min(100,(prev.stats.reputation||0)+Math.floor(outcome.crime.tier*0.5)) : prev.stats.reputation},
+        // Quest progress tracking
+        questProgress: (() => {
+          const qp = { ...(prev.questProgress || {}) };
+          const currentHeat = prev.heat || 0;
+          if (outcome.success) {
+            // Consecutive clean crimes (reset on arrest)
+            qp.consecutiveCleanCrimes = (qp.consecutiveCleanCrimes || 0) + 1;
+            // High heat crimes (for sprint + story objectives)
+            if (currentHeat >= 60) qp.highHeatCrimes = (qp.highHeatCrimes || 0) + 1;
+            // Tier 4+ crimes for sprints
+            if (outcome.crime.tier >= 4) qp.tier4Sprints = (qp.tier4Sprints || 0) + 1;
+            // Cyber crimes (Ghost_Zero series)
+            if (outcome.crime.id?.includes("cyber") || outcome.crime.id?.includes("hack") || outcome.crime.id?.includes("phish")) {
+              qp.completedCyberCrime = (qp.completedCyberCrime || 0) + 1;
+            }
+            // Track heat peak for "Betrayal" story quest objective
+            if (currentHeat >= 50) qp.heatPeakedAbove50 = true;
+            // Track surviving crimes at 80%+ heat for Red Notice quest
+            if (currentHeat >= 80) qp.survivedHighHeat = (qp.survivedHighHeat || 0) + 1;
+          } else {
+            qp.consecutiveCleanCrimes = 0; // reset streak on failure
+          }
+          // Track heat recovery: flag when heat drops below 30 after being above 80
+          const newHeat = Math.min(100, currentHeat + (outcome.heatGain || 0));
+          if (qp.heatPeakedAbove50 && newHeat < 30 && currentHeat >= 30) {
+            qp.recoveredFromHighHeat = (qp.recoveredFromHighHeat || 0) + 1;
+          }
+          return qp;
+        })(),
       };
     });
   };
@@ -284,7 +314,8 @@ export default function App() {
       }
       if (action.type==="pay_crew") {
         addLog(`Payroll: $${action.total.toLocaleString()}`);
-        return {...prev, cash:prev.cash-action.total, crew:(prev.crew||[]).map(m=>({...m,loyalty:Math.min(5,m.loyalty+1)}))};
+        return {...prev, cash:prev.cash-action.total, crew:(prev.crew||[]).map(m=>({...m,loyalty:Math.min(5,m.loyalty+1)})),
+          questProgress: { ...(prev.questProgress||{}), paidPayroll: ((prev.questProgress||{}).paidPayroll || 0) + 1 }};
       }
       return prev;
     });
@@ -435,6 +466,10 @@ export default function App() {
         addLog(`Escaped: ${encounter.title}`);
         toast.success("Escaped!");
         next.encountersEscaped = (next.encountersEscaped || 0) + 1;
+        // Track federal sting survivals for Betrayal story quest
+        if (encounter.id === "federal_sting" || encounter.title?.toLowerCase().includes("sting")) {
+          next.questProgress = { ...(next.questProgress || {}), survivedStingEvent: ((next.questProgress?.survivedStingEvent) || 0) + 1 };
+        }
       }
       return next;
     });
@@ -482,6 +517,64 @@ export default function App() {
       next.contactTrust = { ...(next.contactTrust||{}), [contact.id]: Math.min(4, ((next.contactTrust||{})[contact.id]||0) + 1) };
       addLog(`${contact.alias}: ${job.label}`);
       return next;
+    });
+  };
+
+  const handleSprintAccept = (sprint) => {
+    setPlayer((prev) => {
+      if (!prev || prev.activeSprint) return prev;
+      const snap = {
+        totalEarned:      prev.totalEarned     || 0,
+        crimesSucceeded:  prev.crimesSucceeded  || 0,
+        totalLaundered:   prev.totalLaundered   || 0,
+        timesArrested:    prev.timesArrested    || 0,
+        encountersEscaped:prev.encountersEscaped|| 0,
+        ownedDistricts:   prev.ownedDistricts?.length || 0,
+        usedContactJobs:  { ...(prev.usedContactJobs || {}) },
+        highHeatCrimes:   prev.questProgress?.highHeatCrimes || 0,
+        tier4Sprints:     prev.questProgress?.tier4Sprints   || 0,
+      };
+      addLog(`Sprint started: ${sprint.title} — ${sprint.durationHours}h`);
+      toast.show(`⏱ Sprint: ${sprint.title} — clock running`, "info", 5000);
+      return {
+        ...prev,
+        activeSprint:   { sprintId: sprint.id, startedAt: Date.now() },
+        sprintSnapshot: snap,
+      };
+    });
+  };
+
+  const handleSprintClaim = (sprint) => {
+    setPlayer((prev) => {
+      if (!prev) return prev;
+      let next = { ...prev };
+      if (sprint.rewards?.cash)   next.cash = (next.cash || 0) + sprint.rewards.cash;
+      if (sprint.rewards?.xp)     { const xpR = awardXP(sprint.rewards.xp, next); next = { ...next, ...xpR }; checkLevelUp(prev, next); }
+      if (sprint.rewards?.statBonus) {
+        const ns = { ...next.stats };
+        Object.entries(sprint.rewards.statBonus).forEach(([s, v]) => { ns[s] = (ns[s]||0) + v; });
+        next.stats = ns;
+      }
+      if (sprint.rewards?.title) {
+        next.titles = [...new Set([...(next.titles||[]), sprint.rewards.title])];
+        next.activeTitle = sprint.rewards.title;
+        toast.show(`🏷 Title unlocked: "${sprint.rewards.title}"`, "income", 5000);
+      }
+      next.wonSprints    = [...new Set([...(next.wonSprints||[]), sprint.id])];
+      next.activeSprint  = null;
+      next.sprintSnapshot = null;
+      addLog(`Sprint complete: ${sprint.title} +$${(sprint.rewards?.cash||0).toLocaleString()}`);
+      toast.success(`Sprint won: ${sprint.title}! +$${(sprint.rewards?.cash||0).toLocaleString()}`);
+      return next;
+    });
+  };
+
+  const handleSprintAbandon = (sprint) => {
+    setPlayer((prev) => {
+      if (!prev) return prev;
+      addLog(`Sprint abandoned: ${sprint.title}`);
+      toast.warn(`Sprint abandoned: ${sprint.title}`);
+      return { ...prev, activeSprint: null, sprintSnapshot: null };
     });
   };
 
@@ -533,9 +626,10 @@ export default function App() {
 
   const renderPage = () => {
     switch (page) {
-      case "quests":      return <QuestsPage        player={player} onQuestAccept={handleQuestAccept} onQuestClaim={handleQuestClaim} worldEvent={null} />;
+      case "quests":      return <QuestsPage        player={player} onQuestAccept={handleQuestAccept} onQuestClaim={handleQuestClaim} onSprintAccept={handleSprintAccept} onSprintClaim={handleSprintClaim} onSprintAbandon={handleSprintAbandon} worldEvent={null} />;
       case "statistics":  return <StatisticsPage    player={player}/>;
-      case "settings":    return <SettingsPage      player={player} onReset={handleReset} onHeal={handleHeal} onRestoreEnergy={handleRestoreEnergy}/>;      case "news":        return <NewsFeedPage       player={player}/>;
+      case "settings":    return <SettingsPage      player={player} onReset={handleReset} onHeal={handleHeal} onRestoreEnergy={handleRestoreEnergy}/>;
+      case "news":        return <NewsFeedPage       player={player}/>;
       case "challenges":  return <DailyChallengesPage player={player} onClaimChallenge={handleClaimChallenge}/>;
       case "darkweb":     return <DarkWebPage         player={player} onContactJob={handleContactJob}/>;
       case "dashboard":  return <Dashboard           player={player} onNavigate={setPage}/>;

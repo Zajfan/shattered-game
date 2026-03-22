@@ -1,26 +1,42 @@
 // src/data/questRewards.js
 
-// ── Titles ────────────────────────────────────────────────────────────────
+// ── Titles ─────────────────────────────────────────────────────────────────
+// Keys match EXACTLY the string values awarded in quest rewards
 export const TITLES = {
-  // Story arc titles
-  nobody:          { id: "nobody",         label: "Nobody",            color: "#5a5248",  desc: "Starting title. Everyone begins somewhere." },
-  street_operator: { id: "street_operator",label: "Street Operator",   color: "#d4a827",  desc: "Completed Chapter 1 — The Ground Floor." },
-  made:            { id: "made",            label: "Made",              color: "#5a7ec8",  desc: "Completed Chapter 2 — Moving Product." },
-  underboss:       { id: "underboss",       label: "Underboss",         color: "#a85fd4",  desc: "Completed Chapter 3 — Syndicate." },
-  the_apex:        { id: "the_apex",        label: "The Apex",          color: "#c0392b",  desc: "Completed Chapter 4. You built an empire." },
-  // Side quest titles
-  the_cleaner:     { id: "the_cleaner",     label: "The Cleaner",       color: "#3d8c5a",  desc: "Completed Sofia V.'s full contract chain." },
-  ghost_protocol:  { id: "ghost_protocol",  label: "Ghost Protocol",    color: "#2c3e50",  desc: "Completed El Chivato's intelligence chain." },
-  the_armorer:     { id: "the_armorer",     label: "The Armorer",       color: "#e67e22",  desc: "Completed Viktor K.'s weapons chain." },
-  accountant:      { id: "accountant",      label: "The Accountant",    color: "#3d8c5a",  desc: "Completed Mama Chen's laundering chain." },
-  // Contract titles
-  contractor:      { id: "contractor",      label: "Contractor",        color: "#7f8c8d",  desc: "Completed 10 anonymous contracts." },
-  fixer:           { id: "fixer",           label: "The Fixer",         color: "#c8922a",  desc: "Completed 25 anonymous contracts." },
-  // Challenge titles
-  sprint_king:     { id: "sprint_king",     label: "Sprint King",       color: "#d4a827",  desc: "Won a 48-hour challenge sprint." },
-  // Rare / hidden
-  ghost:           { id: "ghost",           label: "Ghost",             color: "#2c2c2c",  desc: "Hidden title. Earn it." },
-  untouchable:     { id: "untouchable",     label: "Untouchable",       color: "#f1c40f",  desc: "Hidden title. Earn it." },
+  // Default
+  "nobody":             { label: "Nobody",             color: "#5a5248", desc: "Starting title. Everyone begins somewhere." },
+  // Chapter 1
+  "Ghost":              { label: "Ghost",              color: "#7f8c8d", desc: "Reduced heat from 50% to under 15%. You know how to disappear." },
+  "Street Operator":    { label: "Street Operator",    color: "#d4a827", desc: "Built your first crew. Operations are no longer solo." },
+  // Chapter 2
+  "Corner Boss":        { label: "Corner Boss",        color: "#e67e22", desc: "Claimed first territory. This block is yours." },
+  "Aligned":            { label: "Aligned",            color: "#5a7ec8", desc: "Joined an organization. The handshake that changes everything." },
+  "Earner":             { label: "Earner",             color: "#3d8c5a", desc: "Pulled a major score. Nobody questions where you came from now." },
+  "Undisputed":         { label: "Undisputed",         color: "#c0392b", desc: "Settled a territorial dispute decisively. The city noticed." },
+  // Chapter 3
+  "Operator":           { label: "Operator",           color: "#a85fd4", desc: "Built the network. Power is invisible now." },
+  "Cleaner":            { label: "Cleaner",            color: "#3d8c5a", desc: "Built money laundering infrastructure. The art of clean money." },
+  "Ironclad":           { label: "Ironclad",           color: "#7f8c8d", desc: "Survived a betrayal. You came through harder." },
+  "Crime Boss":         { label: "Crime Boss",         color: "#c0392b", desc: "Chapter 3 complete. Five districts, a crew, a faction. An organization." },
+  // Chapter 4
+  "Person of Interest": { label: "Person of Interest", color: "#e74c3c", desc: "Interpol Red Notice issued. Eighteen agencies. You\'re no longer local." },
+  "Untouchable":        { label: "Untouchable",        color: "#f39c12", desc: "Cartel-tier operations. You\'re infrastructure now." },
+  "The System":         { label: "The System",         color: "#9b59b6", desc: "State capture complete. When you own the system, the system works for you." },
+  "Legend":             { label: "Legend",             color: "#f1c40f", desc: "Chapter 4 complete. Your name operates independently of you now." },
+  // Side quests
+  "The Cleaner":        { label: "The Cleaner",        color: "#3d8c5a", desc: "Completed Mama Chen\'s full chain. 88% conversion rate — permanent." },
+  "Phantom":            { label: "Phantom",            color: "#2c3e50", desc: "Placed a mole in a rival organization." },
+  "The Broker":         { label: "The Broker",         color: "#e67e22", desc: "Became Viktor\'s sales arm. You\'re in the arms trade now." },
+  "Zero Day":           { label: "Zero Day",           color: "#3498db", desc: "Completed Ghost_Zero\'s chain." },
+  "Community Pillar":   { label: "Community Pillar",   color: "#27ae60", desc: "Cover established via community institutions." },
+  "Ghost Signal":       { label: "Ghost Signal",       color: "#1abc9c", desc: "Private darknet built. Your communications are unreadable." },
+  "Armed to the Teeth": { label: "Armed to the Teeth", color: "#d35400", desc: "Military-grade equipment cache. Total operational superiority." },
+  "The Diplomat":       { label: "The Diplomat",       color: "#8e44ad", desc: "You architect deals now, not just pull jobs." },
+  // Sprints
+  "The Phantom":        { label: "The Phantom",        color: "#95a5a6", desc: "Won the Ghost Run sprint. 10 crimes, zero arrests." },
+  "Heat Seeker":        { label: "Heat Seeker",        color: "#e74c3c", desc: "Won the Running Hot sprint. Worked at 60%+ heat." },
+  "Teflon":             { label: "Teflon",             color: "#bdc3c7", desc: "Won the Escape Artist sprint. Nothing sticks." },
+  "The Million":        { label: "The Million",        color: "#f1c40f", desc: "Won the Million Mark sprint. The math changed." },
 };
 
 // ── Exclusive quest-only market items ─────────────────────────────────────
